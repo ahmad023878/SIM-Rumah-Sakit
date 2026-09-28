@@ -1,0 +1,25 @@
+{
+  "name": "hospital/simrs-ci4",
+  "description": "Hospital Management System migrated to CodeIgniter 4.7.4 while preserving the original template/assets.",
+  "type": "project",
+  "require": {
+    "php": ">=8.1",
+    "codeigniter4/framework": "4.7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Config\\": "app/Config/"
+    }
+  },
+  "scripts": {
+    "post-update-cmd": [
+      "@php spark cache:clear"
+    ]
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true
+  }
+}
