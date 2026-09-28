@@ -1,0 +1,52 @@
+<?php
+
+namespace Config;
+
+use CodeIgniter\Config\BaseConfig;
+
+class Kint extends BaseConfig
+{
+    /**
+     * --------------------------------------------------------------------------
+     * Display Called From
+     * --------------------------------------------------------------------------
+     *
+     * Whether Kint should display where a variable was called from.
+     *
+     * @var bool
+     */
+    public bool $displayCalledFrom = true;
+
+    /**
+     * --------------------------------------------------------------------------
+     * Maximum Depth
+     * --------------------------------------------------------------------------
+     *
+     * Maximum nesting depth displayed by Kint.
+     *
+     * @var int
+     */
+    public int $maxDepth = 3;
+
+    /**
+     * --------------------------------------------------------------------------
+     * Maximum String Length
+     * --------------------------------------------------------------------------
+     *
+     * Maximum string length displayed by Kint.
+     *
+     * @var int
+     */
+    public int $maxStringLength = 1000;
+
+    /**
+     * --------------------------------------------------------------------------
+     * Maximum Children
+     * --------------------------------------------------------------------------
+     *
+     * Maximum number of children displayed.
+     *
+     * @var int
+     */
+    public int $maxChildren = 128;
+}
