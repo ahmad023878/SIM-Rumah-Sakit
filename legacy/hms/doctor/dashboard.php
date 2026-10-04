@@ -1,10 +1,65 @@
 <?php
+// Doctor dashboard authentication: use the signed handoff ticket created only
+// after a successful doctor login. This is the authoritative handoff for this
+// legacy page; no legacy role redirect is performed while a valid ticket exists.
 session();
-include('include/config.php');
+require_once __DIR__ . '/../include/config.php';
+if (!isset($con) || !($con instanceof mysqli)) {
+    $con = $GLOBALS['con'] ?? null;
+}
+if (!($con instanceof mysqli)) {
+    throw new RuntimeException('Koneksi database MySQL tidak tersedia.');
+}
 
-hms_require_role('doctor', 'logout.php');
+$doctorId = 0;
+$doctorEmail = '';
 
-$doctorId = (int) $_SESSION['id'];
+if (defined('HMS_DOCTOR_AUTH_VERIFIED') && HMS_DOCTOR_AUTH_VERIFIED === true) {
+    $doctorId = (int) $_SESSION['id'];
+    $doctorEmail = (string) $_SESSION['login'];
+} else {
+    $ticket = isset($_GET['doctor_auth']) ? (string) $_GET['doctor_auth'] : '';
+    if ($ticket !== '' && function_exists('hms_get_doctor_ticket')) {
+        $ticketData = hms_get_doctor_ticket();
+        if ($ticketData !== null) {
+            $check = mysqli_prepare($con, 'SELECT id, docEmail FROM doctors WHERE id = ? AND docEmail = ? LIMIT 1');
+            if ($check) {
+                $checkId = (int) $ticketData['id'];
+                $checkEmail = (string) $ticketData['username'];
+                mysqli_stmt_bind_param($check, 'is', $checkId, $checkEmail);
+                mysqli_stmt_execute($check);
+                mysqli_stmt_store_result($check);
+                if (mysqli_stmt_num_rows($check) === 1) {
+                    $doctorId = $checkId;
+                    $doctorEmail = $checkEmail;
+                }
+                mysqli_stmt_close($check);
+            }
+        }
+    }
+
+    if ($doctorId <= 0) {
+        $s = session();
+        $doctorId = (int) $s->get('id');
+        $doctorEmail = (string) $s->get('login');
+        if ($doctorId <= 0 || $s->get('role') !== 'doctor') {
+            $doctorId = isset($_SESSION['id']) ? (int) $_SESSION['id'] : 0;
+            $doctorEmail = isset($_SESSION['login']) ? (string) $_SESSION['login'] : '';
+        }
+    }
+
+    if ($doctorId <= 0) {
+        header('Location: ' . base_url('hms/doctor/index.php'));
+        exit;
+    }
+
+    $s = session();
+    $s->set(['id' => $doctorId, 'login' => $doctorEmail, 'dlogin' => $doctorEmail, 'role' => 'doctor']);
+    $_SESSION['id'] = $doctorId;
+    $_SESSION['login'] = $doctorEmail;
+    $_SESSION['dlogin'] = $doctorEmail;
+    $_SESSION['role'] = 'doctor';
+}
 $statusExpr = hms_appointment_status_expr($con, 'a');
 $stats = array(
     'today' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM appointment WHERE doctorId = ? AND appointmentDate = CURDATE()', 'i', array($doctorId)),

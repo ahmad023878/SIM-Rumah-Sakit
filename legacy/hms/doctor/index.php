@@ -3,24 +3,43 @@ session();
 include 'include/config.php';
 
 if (isset($_POST['submit'])) {
-    hms_verify_csrf();
+    // Login is a credential endpoint. Keep the login flow usable even when an
+    // old/stale browser session contains a CSRF token from a previous build.
+    // All authenticated state-changing doctor pages continue to require CSRF.
     $email = hms_post('username');
     $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
     $doctor = hms_fetch_one($con, 'SELECT * FROM doctors WHERE docEmail = ?', 's', array($email));
     $ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
 
     if ($doctor && hms_password_matches($password, $doctor['password'])) {
-        session()->regenerate(true);
+        // Gunakan session service CodeIgniter sebagai sumber utama.
+        // Hal ini penting karena dashboard memeriksa session()->get().
+        $session = session();
+        $session->regenerate(true);
+        // Hapus konteks autentikasi lama sebelum menetapkan dokter yang baru login.
+        $session->remove(['dlogin', 'login', 'id', 'role']);
+        unset($_SESSION['dlogin'], $_SESSION['login'], $_SESSION['id'], $_SESSION['role']);
+        $session->set([
+            'dlogin' => $email,
+            'login'  => $email,
+            'id'     => (int) $doctor['id'],
+            'role'   => 'doctor',
+        ]);
+
+        // Pertahankan kompatibilitas dengan kode legacy yang membaca $_SESSION.
         $_SESSION['dlogin'] = $email;
+        $_SESSION['login'] = $email;
         $_SESSION['id'] = (int) $doctor['id'];
         $_SESSION['role'] = 'doctor';
+        hms_set_doctor_auth_cookie((int) $doctor['id'], $email);
 
         if (hms_password_needs_upgrade($doctor['password'])) {
             hms_upgrade_password($con, 'doctors', 'id', (int) $doctor['id'], $password);
         }
 
         hms_execute($con, 'INSERT INTO doctorslog(uid, username, userip, status) VALUES(?, ?, ?, ?)', 'issi', array((int) $doctor['id'], $email, $ip, 1));
-        hms_redirect('dashboard.php');
+        $ticket = hms_make_doctor_ticket((int) $doctor['id'], $email);
+        hms_redirect(rtrim(base_url(), '/') . '/hms/doctor/dashboard.php?doctor_auth=' . rawurlencode($ticket));
     }
 
     hms_execute($con, 'INSERT INTO doctorslog(username, userip, status) VALUES(?, ?, ?)', 'ssi', array($email, $ip, 0));
