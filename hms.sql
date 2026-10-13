@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 04, 2026 at 04:44 AM
+-- Generation Time: Oct 13, 2026 at 02:56 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -71,11 +71,12 @@ CREATE TABLE `appointment` (
 --
 
 INSERT INTO `appointment` (`id`, `doctorSpecialization`, `doctorId`, `userId`, `consultancyFees`, `appointmentDate`, `appointmentTime`, `postingDate`, `userStatus`, `doctorStatus`, `updationDate`, `status`, `status_updated_at`, `status_updated_by`, `reschedule_reason`, `cancel_reason`) VALUES
-(1, 'ENT', 1, 1, 500, '2026-09-25', '9:15 AM', '2026-09-25 03:42:11', 1, 1, '2026-09-30 02:38:32', 'Completed', '2026-09-30 22:07:28', 'doctor:1', NULL, NULL),
-(2, 'Endocrinologists', 2, 2, 800, '2026-09-31', '2:45 PM', '2026-09-16 09:08:54', 1, 0, '2026-10-15 17:00:32', 'Cancelled', '2026-10-15 22:30:32', 'admin:1', NULL, NULL),
+(1, 'ENT', 1, 1, 500, '2026-09-25', '9:15 AM', '2026-09-25 03:42:11', 1, 1, '2026-10-13 06:28:59', 'Completed', '2026-10-13 13:28:59', 'doctor:1', NULL, NULL),
+(2, 'Endocrinologists', 2, 2, 800, '2026-09-31', '2:45 PM', '2026-09-16 09:08:54', 1, 0, '2026-10-13 05:04:39', 'Cancelled', '2026-10-13 12:04:39', 'admin:1', NULL, NULL),
 (3, 'ENT', 1, 1, 500, '2026-09-16', '10:30:00', '2026-09-15 16:44:59', 1, 1, '2026-09-15 16:44:59', 'Completed', '2026-09-15 22:14:59', 'doctor:1', NULL, NULL),
 (4, 'Dental Care', 8, 3, 800, '2026-09-20', '11:42:00', '2026-09-18 07:13:11', 1, 1, '2026-09-18 07:32:15', 'Completed', '2026-09-18 13:02:15', 'doctor:8', NULL, NULL),
-(5, 'Dental Care', 9, 4, 500, '2026-09-22', '11:50:00', '2026-09-21 16:17:00', 1, 1, '2026-09-21 16:17:50', 'Completed', '2026-09-21 21:47:50', 'doctor:9', NULL, NULL);
+(5, 'Dental Care', 9, 4, 500, '2026-09-22', '11:50:00', '2026-09-21 16:17:00', 1, 1, '2026-09-21 16:17:50', 'Completed', '2026-09-21 21:47:50', 'doctor:9', NULL, NULL),
+(6, 'Anesthesia', 10, 5, 1000000, '2026-10-13', '13:50:00', '2026-10-13 06:55:27', 1, 1, NULL, 'Pending', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -164,7 +165,24 @@ INSERT INTO `audit_logs` (`id`, `actor_type`, `actor_id`, `action`, `entity_type
 (62, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-03 09:04:20'),
 (63, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-03 10:55:47'),
 (64, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-03 13:27:41'),
-(65, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-03 23:20:54');
+(65, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-03 23:20:54'),
+(66, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-10 10:44:00'),
+(67, 'admin', 1, 'doctor_created', 'doctors', 10, 'Doctor created: Dr. Tora', '127.0.0.1', '2026-10-10 10:47:51'),
+(68, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-13 12:02:02'),
+(69, 'admin', 1, 'appointment_status_changed', 'appointment', 2, 'Status changed to Cancelled', '127.0.0.1', '2026-10-13 12:04:39'),
+(70, 'admin', 1, 'availability_created', 'doctor_availability', 5, 'Created doctor availability slot.', '127.0.0.1', '2026-10-13 12:07:54'),
+(71, 'doctor', 1, 'availability_created', 'doctor_availability', 6, 'Created availability slot.', '127.0.0.1', '2026-10-13 12:33:19'),
+(72, 'doctor', 1, 'patient_created', 'tblpatient', 4, 'Patient created: Amirrulah', '127.0.0.1', '2026-10-13 12:36:15'),
+(73, 'doctor', 1, 'patient_updated', 'tblpatient', 2, 'Patient updated: Amit', '127.0.0.1', '2026-10-13 12:36:55'),
+(74, 'doctor', 1, 'patient_updated', 'tblpatient', 4, 'Patient updated: Amirrulah', '127.0.0.1', '2026-10-13 12:43:00'),
+(75, 'admin', 1, 'medical_history_added', 'tblpatient', 4, 'Admin added medical history.', '127.0.0.1', '2026-10-13 13:10:04'),
+(76, 'doctor', 1, 'appointment_status_changed', 'appointment', 1, 'Status changed to Completed', '127.0.0.1', '2026-10-13 13:28:59'),
+(77, 'doctor', 1, 'prescription_saved', 'appointment', 1, 'Prescription saved for John Doe', '127.0.0.1', '2026-10-13 13:28:59'),
+(78, 'doctor', 1, 'patient_updated', 'tblpatient', 4, 'Patient updated: Amirrulah', '127.0.0.1', '2026-10-13 13:29:17'),
+(79, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-13 13:34:36'),
+(80, 'patient', 5, 'appointment_created', 'appointment', 6, 'Booked with Dr. Dr. Tora', '127.0.0.1', '2026-10-13 13:55:27'),
+(81, 'admin', 1, 'admin_login', 'admin', 1, 'Admin logged in.', '127.0.0.1', '2026-10-13 14:46:45'),
+(82, 'doctor', 1, 'patient_updated', 'tblpatient', 4, 'Patient updated: Amirrulah', '127.0.0.1', '2026-10-13 15:01:48');
 
 -- --------------------------------------------------------
 
@@ -197,7 +215,8 @@ INSERT INTO `doctors` (`id`, `specilization`, `doctorName`, `address`, `docFees`
 (6, 'Internal Medicine', 'Dr Romil', 'Max Hospital ', '1500', 8563214751, 'drromil12@gmail.com', 'f925916e2754e5e03f75dd58a5733251', '2024-05-16 09:14:11', NULL),
 (7, 'Obstetrics and Gynecology', 'Bhavya rathore', 'Shop 12 Indira Puram Ghaziabad', '800', 745621330, 'bhawya12@tt.com', 'f925916e2754e5e03f75dd58a5733251', '2024-05-16 09:15:18', NULL),
 (8, 'Dental Care', 'Pankaj Sharma', 'P-907, Navi Market\r\n', '800', 2255647899, 'pankaj@gmail.com', '$2y$10$P9bNKHNLlg/QJv9Jv6r42eaOOMen3Fzd5LoU.JGd4Ymy7pmhalsJK', '2026-06-18 07:10:41', NULL),
-(9, 'Dental Care', 'Dr. Garima ', 'Berlin', '500', 5264123032, 'ga12@test.com', '$2y$10$wXLPRArKIuweC9fz1ibz0./zEC7v9bbbbaGdQdjv2VwQDPtkSBdky', '2026-06-21 16:14:46', '2026-10-04 02:34:00');
+(9, 'Dental Care', 'Dr. Garima ', 'Berlin', '500', 5264123032, 'ga12@test.com', '$2y$10$wXLPRArKIuweC9fz1ibz0./zEC7v9bbbbaGdQdjv2VwQDPtkSBdky', '2026-06-21 16:14:46', '2026-10-04 02:34:00'),
+(10, 'Anesthesia', 'Dr. Tora', 'Rumah Sakit Bermeos Jl. Cihampelas Bandung', '1000000', 81567345467, 'tora@gmail.com', '$2y$10$dAAN4Dpm1IgGyy44L7JC9eCOtAIzcJTedny.Net4pVsrIOx4f38UG', '2026-10-10 03:47:51', NULL);
 
 -- --------------------------------------------------------
 
@@ -251,7 +270,11 @@ INSERT INTO `doctorslog` (`id`, `uid`, `username`, `userip`, `loginTime`, `logou
 (36, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-03 15:53:06', NULL, 1),
 (37, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-03 16:04:15', NULL, 1),
 (38, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-03 16:11:11', NULL, 1),
-(39, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-03 16:20:01', NULL, 1);
+(39, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-03 16:20:01', NULL, 1),
+(40, NULL, 'johndoe12@test.com', 0x3132372e302e302e3100000000000000, '2026-10-13 05:30:51', NULL, 0),
+(41, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-13 05:31:12', NULL, 1),
+(42, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-13 06:17:11', NULL, 1),
+(43, 1, 'anujk123@test.com', 0x3132372e302e302e3100000000000000, '2026-10-13 07:59:27', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -315,7 +338,9 @@ INSERT INTO `doctor_availability` (`id`, `doctor_id`, `day_of_week`, `available_
 (1, 1, 1, '2026-10-10', '11:10:00', '14:30:00', 10, 50, 1, '2026-10-10 22:09:38', '2026-10-03 09:45:17'),
 (2, 1, 2, '2026-10-16', '09:00:00', '12:00:00', 30, 3, 1, '2026-10-15 22:14:59', '2026-10-03 09:45:43'),
 (3, 8, 0, '2026-10-20', '09:30:00', '18:10:00', 30, 10, 1, '2026-10-18 12:42:32', '2026-10-03 09:46:04'),
-(4, 9, 1, '2026-10-22', '10:30:00', '12:50:00', 25, 10, 1, '2026-10-21 21:45:41', '2026-10-03 09:46:21');
+(4, 9, 1, '2026-10-22', '10:30:00', '12:50:00', 25, 10, 1, '2026-10-21 21:45:41', '2026-10-03 09:46:21'),
+(5, 10, 6, '2026-10-13', '10:00:00', '14:00:00', 30, 6, 1, '2026-10-13 12:07:54', NULL),
+(6, 1, 2, '2026-10-18', '14:00:00', '22:00:00', 30, 1, 1, '2026-10-13 12:33:19', NULL);
 
 -- --------------------------------------------------------
 
@@ -341,21 +366,26 @@ CREATE TABLE `notifications` (
 INSERT INTO `notifications` (`id`, `user_type`, `user_id`, `title`, `message`, `is_read`, `created_at`, `read_at`) VALUES
 (1, 'patient', 1, 'Prescription available', 'Your prescription for appointment #1 is ready to download.', 0, '2026-09-15 22:06:25', NULL),
 (2, 'patient', 1, 'Appointment status updated', 'Your appointment is now Completed.', 0, '2026-09-15 22:06:51', NULL),
-(3, 'admin', NULL, 'Appointment status updated', 'Doctor updated appointment #1 to Completed.', 1, '2026-09-15 22:06:51', '2026-09-21 21:49:01'),
+(3, 'admin', NULL, 'Appointment status updated', 'Doctor updated appointment #1 to Completed.', 1, '2026-09-15 22:06:51', '2026-10-13 12:30:15'),
 (4, 'patient', 1, 'Prescription available', 'Your prescription for appointment #1 is ready to download.', 0, '2026-09-15 22:07:28', NULL),
 (5, 'patient', 1, 'Workflow verification', 'Prescription workflow verified.', 0, '2026-09-15 22:14:59', NULL),
 (6, 'patient', 2, 'Appointment status updated', 'Your appointment is now Cancelled.', 0, '2026-09-15 22:30:32', NULL),
 (7, 'doctor', 2, 'Appointment status updated', 'Appointment #2 is now Cancelled.', 0, '2026-09-15 22:30:32', NULL),
-(8, 'admin', NULL, 'New appointment request', 'A patient booked appointment #4.', 1, '2026-09-18 12:43:11', '2026-09-21 21:49:01'),
+(8, 'admin', NULL, 'New appointment request', 'A patient booked appointment #4.', 1, '2026-09-18 12:43:11', '2026-10-13 12:30:15'),
 (9, 'doctor', 8, 'New appointment request', 'A patient booked appointment #4.', 0, '2026-09-18 12:43:11', NULL),
 (10, 'patient', 3, 'Appointment status updated', 'Your appointment is now Approved.', 0, '2026-09-18 12:51:27', NULL),
-(11, 'admin', NULL, 'Appointment status updated', 'Doctor updated appointment #4 to Approved.', 1, '2026-09-18 12:51:27', '2026-09-21 21:49:01'),
+(11, 'admin', NULL, 'Appointment status updated', 'Doctor updated appointment #4 to Approved.', 1, '2026-09-18 12:51:27', '2026-10-13 12:30:15'),
 (12, 'patient', 3, 'Prescription available', 'Your prescription for appointment #4 is ready to download.', 0, '2026-09-18 13:02:15', NULL),
-(13, 'admin', NULL, 'New appointment request', 'A patient booked appointment #5.', 1, '2026-09-21 21:47:00', '2026-09-21 21:49:01'),
+(13, 'admin', NULL, 'New appointment request', 'A patient booked appointment #5.', 1, '2026-09-21 21:47:00', '2026-10-13 12:30:15'),
 (14, 'doctor', 9, 'New appointment request', 'A patient booked appointment #5.', 0, '2026-09-21 21:47:00', NULL),
 (15, 'patient', 4, 'Appointment status updated', 'Your appointment is now Completed.', 0, '2026-09-21 21:47:19', NULL),
-(16, 'admin', NULL, 'Appointment status updated', 'Doctor updated appointment #5 to Completed.', 1, '2026-09-21 21:47:19', '2026-09-21 21:49:01'),
-(17, 'patient', 4, 'Prescription available', 'Your prescription for appointment #5 is ready to download.', 0, '2026-09-21 21:47:50', NULL);
+(16, 'admin', NULL, 'Appointment status updated', 'Doctor updated appointment #5 to Completed.', 1, '2026-09-21 21:47:19', '2026-10-13 12:30:15'),
+(17, 'patient', 4, 'Prescription available', 'Your prescription for appointment #5 is ready to download.', 0, '2026-09-21 21:47:50', NULL),
+(18, 'patient', 2, 'Janji Temu status updated', 'Your appointment is now Cancelled.', 0, '2026-10-13 12:04:39', NULL),
+(19, 'doctor', 2, 'Janji Temu status updated', 'Janji Temu #2 is now Cancelled.', 0, '2026-10-13 12:04:39', NULL),
+(20, 'patient', 1, 'Prescription available', 'Your prescription for appointment #1 is ready to download.', 0, '2026-10-13 13:28:59', NULL),
+(21, 'admin', NULL, 'New appointment request', 'A patient booked appointment #6.', 0, '2026-10-13 13:55:27', NULL),
+(22, 'doctor', 10, 'New appointment request', 'A patient booked appointment #6.', 0, '2026-10-13 13:55:27', NULL);
 
 -- --------------------------------------------------------
 
@@ -382,7 +412,7 @@ CREATE TABLE `prescriptions` (
 --
 
 INSERT INTO `prescriptions` (`id`, `appointment_id`, `doctor_id`, `patient_user_id`, `diagnosis`, `treatment`, `medicines`, `notes`, `followup_date`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1, 'Fever', 'Take Reset', 'Dolo 600 Mg', 'NA', '2026-09-30', '2026-09-15 22:06:25', '2026-09-15 22:07:28'),
+(1, 1, 1, 1, 'Fever', 'Take Reset', 'Dolo 600 Mg', 'NA', '2026-10-10', '2026-09-15 22:06:25', '2026-10-13 13:28:59'),
 (3, 3, 1, 1, 'Workflow verification diagnosis', 'Workflow verification treatment', 'Workflow verification medicine', 'Created during completion check', '2026-09-22', '2026-09-15 22:14:59', '2026-09-15 22:14:59'),
 (4, 4, 8, 3, 'Have sensitivity in teeth', 'A cleaning session must be taken twice in month', 'Vinarge Tooth Paste and Mouth Gargle', 'Not take carbonated drinks', '2026-09-27', '2026-09-18 13:02:15', '2026-09-18 13:02:15'),
 (5, 5, 9, 4, 'RCT', 'RCT in two teeths', 'RX Tab 1, Tab2', 'NA', '2026-09-26', '2026-09-21 21:47:50', '2026-09-21 21:47:50');
@@ -410,8 +440,8 @@ CREATE TABLE `tblcontactus` (
 --
 
 INSERT INTO `tblcontactus` (`id`, `fullname`, `email`, `contactno`, `message`, `PostingDate`, `AdminRemark`, `LastupdationDate`, `IsRead`) VALUES
-(1, 'kumar', 'jk30@test.com', 1425362514, 'This is for testing purposes.   This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.', '2024-09-20 16:52:03', NULL, '2026-10-04 02:41:30', NULL),
-(2, 'kumar', 'ak@gmail.com', 1111122233, 'This is for testing', '2024-09-23 13:13:41', 'Contact the patient', '2026-10-04 02:41:43', 1);
+(1, 'kumar', 'jk30@test.com', 1425362514, 'This is for testing purposes.   This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.This is for testing purposes.', '2026-09-20 16:52:03', NULL, '2026-10-13 05:25:52', NULL),
+(2, 'kumar', 'ak@gmail.com', 1111122233, 'This is for testing', '2026-09-23 13:13:41', 'Contact the patient', '2026-10-13 05:26:08', 1);
 
 -- --------------------------------------------------------
 
@@ -435,8 +465,9 @@ CREATE TABLE `tblmedicalhistory` (
 --
 
 INSERT INTO `tblmedicalhistory` (`ID`, `PatientID`, `BloodPressure`, `BloodSugar`, `Weight`, `Temperature`, `MedicalPres`, `CreationDate`) VALUES
-(1, 2, '80/120', '110', '85', '97', 'Dolo,\r\nLevocit 5mg', '2024-08-16 09:07:16'),
-(2, 3, '101/60', '110/120', '52', '98', 'uyuikhkjhjkgh', '2026-09-18 08:01:20');
+(1, 2, '80/120', '110', '85', '97', 'Dolo,\r\nLevocit 5mg', '2026-08-16 09:07:16'),
+(2, 3, '101/60', '110/120', '52', '98', 'uyuikhkjhjkgh', '2026-09-18 08:01:20'),
+(3, 4, '140/90', '126mg/dl', '59', '38C', 'Hipertensi', '2026-10-13 06:10:04');
 
 -- --------------------------------------------------------
 
@@ -489,8 +520,9 @@ CREATE TABLE `tblpatient` (
 
 INSERT INTO `tblpatient` (`ID`, `Docid`, `PatientName`, `PatientContno`, `PatientEmail`, `PatientGender`, `PatientAdd`, `PatientAge`, `PatientMedhis`, `CreationDate`, `UpdationDate`) VALUES
 (1, 1, 'Rahul', 452463210, 'rahul12@gmail.com', 'male', 'NA', 32, 'Fever, Cold', '2024-09-16 05:23:35', NULL),
-(2, 1, 'Amit', 4545454545, 'amitk@gmail.com', 'male', 'NA', 45, 'Fever', '2024-09-16 09:01:26', NULL),
-(3, 8, 'Seema', 1562368974, 'seema@gmail.com', 'Female', 'NA', 38, 'Not Yet', '2026-09-18 07:34:16', NULL);
+(2, 1, 'Amit', 4545454545, 'amitk@gmail.com', 'Perempuan', 'NA', 45, 'Fever', '2024-09-16 09:01:26', '2026-10-13 05:36:55'),
+(3, 8, 'Seema', 1562368974, 'seema@gmail.com', 'Female', 'NA', 38, 'Not Yet', '2026-09-18 07:34:16', NULL),
+(4, 1, 'Amirrulah', 842357677, 'amirrulah@gmail.com', 'Laki-laki', 'Tebet Raya No 37 Jakarta Selatan', 48, 'Asam Lambung Akut', '2026-10-13 05:36:15', '2026-10-13 08:01:48');
 
 -- --------------------------------------------------------
 
@@ -521,7 +553,12 @@ INSERT INTO `userlog` (`id`, `uid`, `username`, `userip`, `loginTime`, `logout`,
 (14, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-03 02:51:41', NULL, 1),
 (15, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-03 03:14:18', NULL, 1),
 (16, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-03 03:55:25', NULL, 1),
-(17, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-03 16:21:32', NULL, 1);
+(17, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-03 16:21:32', NULL, 1),
+(18, 1, 'johndoe12@test.com', 0x3132372e302e302e3100000000000000, '2026-10-04 04:38:59', NULL, 1),
+(19, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-09 02:21:42', NULL, 1),
+(20, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-13 06:31:32', NULL, 1),
+(21, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-13 06:36:09', NULL, 1),
+(22, 5, 'widiawan@gmail.com', 0x3132372e302e302e3100000000000000, '2026-10-13 06:54:22', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -560,103 +597,128 @@ INSERT INTO `users` (`id`, `fullName`, `address`, `city`, `gender`, `email`, `pa
 -- Indexes for table `admin`
 --
 ALTER TABLE `admin`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_admin_username` (`username`);
 
 --
 -- Indexes for table `appointment`
 --
 ALTER TABLE `appointment`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_appointment_doctor` (`doctorId`),
+  ADD KEY `idx_appointment_patient` (`userId`),
+  ADD KEY `idx_appointment_date` (`appointmentDate`),
+  ADD KEY `idx_appointment_status` (`status`),
+  ADD KEY `idx_appointment_doctor_date` (`doctorId`,`appointmentDate`),
+  ADD KEY `idx_appointment_patient_date` (`userId`,`appointmentDate`);
 
 --
 -- Indexes for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_audit_actor` (`actor_type`,`actor_id`),
-  ADD KEY `idx_audit_entity` (`entity_type`,`entity_id`),
-  ADD KEY `idx_audit_created` (`created_at`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `doctors`
 --
 ALTER TABLE `doctors`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_doctors_email` (`docEmail`),
+  ADD KEY `idx_doctors_specialization` (`specilization`);
 
 --
 -- Indexes for table `doctorslog`
 --
 ALTER TABLE `doctorslog`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_doctorslog_uid` (`uid`),
+  ADD KEY `idx_doctorslog_login_time` (`loginTime`),
+  ADD KEY `idx_doctorslog_status` (`status`);
 
 --
 -- Indexes for table `doctorspecilization`
 --
 ALTER TABLE `doctorspecilization`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_specialization_name` (`specilization`),
+  ADD KEY `idx_specialization_name` (`specilization`);
 
 --
 -- Indexes for table `doctor_availability`
 --
 ALTER TABLE `doctor_availability`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_doctor_day` (`doctor_id`,`day_of_week`),
-  ADD KEY `idx_doctor_date` (`doctor_id`,`available_date`);
+  ADD KEY `idx_doctor_availability_doctor_day` (`doctor_id`,`day_of_week`),
+  ADD KEY `idx_doctor_availability_doctor_date` (`doctor_id`,`available_date`),
+  ADD KEY `idx_doctor_availability_active` (`is_active`,`available_date`);
 
 --
 -- Indexes for table `notifications`
 --
 ALTER TABLE `notifications`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_notifications_user` (`user_type`,`user_id`,`is_read`),
-  ADD KEY `idx_notifications_created` (`created_at`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `prescriptions`
 --
 ALTER TABLE `prescriptions`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uniq_prescription_appointment` (`appointment_id`),
-  ADD KEY `idx_prescription_doctor` (`doctor_id`),
-  ADD KEY `idx_prescription_patient` (`patient_user_id`),
-  ADD KEY `idx_prescription_followup` (`followup_date`);
+  ADD UNIQUE KEY `uk_prescriptions_appointment` (`appointment_id`),
+  ADD KEY `idx_prescriptions_doctor` (`doctor_id`),
+  ADD KEY `idx_prescriptions_patient` (`patient_user_id`),
+  ADD KEY `idx_prescriptions_followup` (`followup_date`),
+  ADD KEY `idx_prescriptions_created` (`created_at`);
 
 --
 -- Indexes for table `tblcontactus`
 --
 ALTER TABLE `tblcontactus`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_contact_email` (`email`),
+  ADD KEY `idx_contact_read` (`IsRead`),
+  ADD KEY `idx_contact_posting` (`PostingDate`);
 
 --
 -- Indexes for table `tblmedicalhistory`
 --
 ALTER TABLE `tblmedicalhistory`
-  ADD PRIMARY KEY (`ID`);
+  ADD PRIMARY KEY (`ID`),
+  ADD KEY `idx_medicalhistory_patient` (`PatientID`),
+  ADD KEY `idx_medicalhistory_creation` (`CreationDate`);
 
 --
 -- Indexes for table `tblpage`
 --
 ALTER TABLE `tblpage`
-  ADD PRIMARY KEY (`ID`);
+  ADD PRIMARY KEY (`ID`),
+  ADD KEY `idx_page_type` (`PageType`);
 
 --
 -- Indexes for table `tblpatient`
 --
 ALTER TABLE `tblpatient`
-  ADD PRIMARY KEY (`ID`);
+  ADD PRIMARY KEY (`ID`),
+  ADD KEY `idx_tblpatient_docid` (`Docid`),
+  ADD KEY `idx_tblpatient_email` (`PatientEmail`),
+  ADD KEY `idx_tblpatient_creation` (`CreationDate`);
 
 --
 -- Indexes for table `userlog`
 --
 ALTER TABLE `userlog`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_userlog_uid` (`uid`),
+  ADD KEY `idx_userlog_login_time` (`loginTime`),
+  ADD KEY `idx_userlog_status` (`status`);
 
 --
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `email` (`email`);
+  ADD UNIQUE KEY `uk_users_email` (`email`),
+  ADD KEY `idx_users_name` (`fullName`),
+  ADD KEY `idx_users_gender` (`gender`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -672,25 +734,25 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT for table `appointment`
 --
 ALTER TABLE `appointment`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
 
 --
 -- AUTO_INCREMENT for table `doctors`
 --
 ALTER TABLE `doctors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `doctorslog`
 --
 ALTER TABLE `doctorslog`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `doctorspecilization`
@@ -702,19 +764,19 @@ ALTER TABLE `doctorspecilization`
 -- AUTO_INCREMENT for table `doctor_availability`
 --
 ALTER TABLE `doctor_availability`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `prescriptions`
 --
 ALTER TABLE `prescriptions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `tblcontactus`
@@ -726,7 +788,7 @@ ALTER TABLE `tblcontactus`
 -- AUTO_INCREMENT for table `tblmedicalhistory`
 --
 ALTER TABLE `tblmedicalhistory`
-  MODIFY `ID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `ID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tblpage`
@@ -738,19 +800,68 @@ ALTER TABLE `tblpage`
 -- AUTO_INCREMENT for table `tblpatient`
 --
 ALTER TABLE `tblpatient`
-  MODIFY `ID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `ID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `userlog`
 --
 ALTER TABLE `userlog`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `appointment`
+--
+ALTER TABLE `appointment`
+  ADD CONSTRAINT `fk_appointment_doctor` FOREIGN KEY (`doctorId`) REFERENCES `doctors` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_appointment_patient_user` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `doctorslog`
+--
+ALTER TABLE `doctorslog`
+  ADD CONSTRAINT `fk_doctorslog_doctor` FOREIGN KEY (`uid`) REFERENCES `doctors` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `doctor_availability`
+--
+ALTER TABLE `doctor_availability`
+  ADD CONSTRAINT `fk_doctor_availability_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `prescriptions`
+--
+ALTER TABLE `prescriptions`
+  ADD CONSTRAINT `fk_prescriptions_appointment` FOREIGN KEY (`appointment_id`) REFERENCES `appointment` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_prescriptions_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_prescriptions_patient_user` FOREIGN KEY (`patient_user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `tblmedicalhistory`
+--
+ALTER TABLE `tblmedicalhistory`
+  ADD CONSTRAINT `fk_medicalhistory_patient` FOREIGN KEY (`PatientID`) REFERENCES `tblpatient` (`ID`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `tblpatient`
+--
+ALTER TABLE `tblpatient`
+  ADD CONSTRAINT `fk_tblpatient_doctor` FOREIGN KEY (`Docid`) REFERENCES `doctors` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `userlog`
+--
+ALTER TABLE `userlog`
+  ADD CONSTRAINT `fk_userlog_user` FOREIGN KEY (`uid`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
