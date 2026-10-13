@@ -1,0 +1,10 @@
+FINAL5 - Doctor login handoff fix
+
+The doctor login now redirects to dashboard.php with a short-lived signed doctor_auth ticket.
+The dashboard verifies the ticket against the doctors table and restores the session. This avoids
+relying solely on CI4/legacy session handoff when legacy PHP files are requested directly.
+
+After successful verification, the existing signed cookie/session are also restored.
+
+Target URL after login:
+http://localhost:8080/hospital-sim/hms/doctor/dashboard.php?doctor_auth=...

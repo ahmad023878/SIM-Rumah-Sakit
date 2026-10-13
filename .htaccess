@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Send the HMS application through CodeIgniter 4 Legacy controller.
+RewriteRule ^hms(?:/.*)?$ index.php [L,QSA]
+
+# Existing application files/directories outside HMS are served normally.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
