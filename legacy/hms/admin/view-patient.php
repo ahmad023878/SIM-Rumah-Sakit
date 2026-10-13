@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     hms_verify_csrf();
     hms_execute(
         $con,
-        'INSERT INTO tblmedicalhistory(PatientID, BloodPressure, BloodSugar, Berat Badan, Suhu Tubuh, MedicalPres) VALUES(?, ?, ?, ?, ?, ?)',
+        'INSERT INTO tblmedicalhistory(PatientID, BloodPressure, BloodSugar, Weight, Temperature, MedicalPres) VALUES(?, ?, ?, ?, ?, ?)',
         'isssss',
         array($patientId, hms_post('bp'), hms_post('bs'), hms_post('weight'), hms_post('temp'), hms_post('pres'))
     );
@@ -53,7 +53,7 @@ hms_layout_header('Detail Pasien', 'admin', 'patients');
                 <?php foreach ($history as $item) { ?>
                     <div class="timeline-item">
                         <div class="fw-semibold"><?php echo hms_e($item['CreationDate']); ?></div>
-                        <div class="small text-muted">BP: <?php echo hms_e($item['BloodPressure']); ?> | Sugar: <?php echo hms_e($item['BloodSugar']); ?> | Berat Badan: <?php echo hms_e($item['Berat Badan']); ?> | Temp: <?php echo hms_e($item['Suhu Tubuh']); ?></div>
+                        <div class="small text-muted">BP: <?php echo hms_e($item['BloodPressure']); ?> | Sugar: <?php echo hms_e($item['BloodSugar']); ?> | Berat Badan: <?php echo hms_e($item['Weight']); ?> | Temp: <?php echo hms_e($item['Temperature']); ?></div>
                         <div><?php echo nl2br(hms_e($item['MedicalPres'])); ?></div>
                     </div>
                 <?php } ?>

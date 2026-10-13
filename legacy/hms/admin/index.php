@@ -2,7 +2,15 @@
 session();
 include 'include/config.php';
 
+if (isset($_GET['captcha_refresh'])) {
+    hms_captcha_refresh('admin');
+    hms_redirect(basename(__FILE__));
+}
+
 if (isset($_POST['submit'])) {
+    if (!hms_verify_captcha('admin')) {
+        hms_redirect('index.php');
+    }
     hms_verify_csrf();
     $username = hms_post('username');
     $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
@@ -40,6 +48,8 @@ if (isset($_POST['submit'])) {
     hms_redirect('index.php');
 }
 
+$captchaQuestion = hms_captcha_question('admin');
+
 hms_auth_header('Login Admin', 'Login Admin', 'Kelola janji temu, dokter, laporan, notifikasi, dan log audit.', '../../index.php');
 ?>
 <form method="post" class="mt-4">
@@ -57,6 +67,15 @@ hms_auth_header('Login Admin', 'Login Admin', 'Kelola janji temu, dokter, lapora
             <span class="input-group-text"><i class="bi bi-lock"></i></span>
             <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
         </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="captcha">Kode CAPTCHA</label>
+        <div style="display:flex;align-items:stretch;gap:8px;max-width:390px;">
+            <?php echo hms_captcha_image('admin'); ?>
+            <?php echo hms_captcha_refresh_button('admin'); ?>
+        </div>
+        <div class="mt-2" style="max-width:390px;"><?php echo hms_captcha_field('admin'); ?></div>
+        <div class="form-text">Ketik kode yang terlihat pada gambar CAPTCHA.</div>
     </div>
     <button type="submit" class="btn btn-primary w-100" name="submit">
         <i class="bi bi-box-arrow-in-right me-1"></i>Masuk
