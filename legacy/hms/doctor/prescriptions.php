@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($patientRecord) {
         hms_execute(
             $con,
-            'INSERT INTO tblmedicalhistory(PatientID, BloodPressure, BloodSugar, Berat Badan, Suhu Tubuh, MedicalPres) VALUES(?, ?, ?, ?, ?, ?)',
+            'INSERT INTO tblmedicalhistory(PatientID, BloodPressure, BloodSugar, Weight, Temperature, MedicalPres) VALUES(?, ?, ?, ?, ?, ?)',
             'isssss',
             array((int) $patientRecord['ID'], '', '', '', '', $diagnosis . "\n" . $treatment . "\n" . $medicines)
         );

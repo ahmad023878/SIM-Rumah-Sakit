@@ -2,7 +2,15 @@
 session();
 include 'include/config.php';
 
+if (isset($_GET['captcha_refresh'])) {
+    hms_captcha_refresh('doctor');
+    hms_redirect(basename(__FILE__));
+}
+
 if (isset($_POST['submit'])) {
+    if (!hms_verify_captcha('doctor')) {
+        hms_redirect('index.php');
+    }
     // Login is a credential endpoint. Keep the login flow usable even when an
     // old/stale browser session contains a CSRF token from a previous build.
     // All authenticated state-changing doctor pages continue to require CSRF.
@@ -47,6 +55,8 @@ if (isset($_POST['submit'])) {
     hms_redirect('index.php');
 }
 
+$captchaQuestion = hms_captcha_question('doctor');
+
 hms_auth_header('Login Dokter', 'Login Dokter', 'Tinjau janji temu hari ini, resep, dan rekam perawatan pasien.', '../../index.php');
 ?>
 <form method="post" class="mt-4">
@@ -67,6 +77,15 @@ hms_auth_header('Login Dokter', 'Login Dokter', 'Tinjau janji temu hari ini, res
             <span class="input-group-text"><i class="bi bi-lock"></i></span>
             <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
         </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="captcha">Kode CAPTCHA</label>
+        <div style="display:flex;align-items:stretch;gap:8px;max-width:390px;">
+            <?php echo hms_captcha_image('doctor'); ?>
+            <?php echo hms_captcha_refresh_button('doctor'); ?>
+        </div>
+        <div class="mt-2" style="max-width:390px;"><?php echo hms_captcha_field('doctor'); ?></div>
+        <div class="form-text">Ketik kode yang terlihat pada gambar CAPTCHA.</div>
     </div>
     <button type="submit" class="btn btn-primary w-100" name="submit">
         <i class="bi bi-box-arrow-in-right me-1"></i>Masuk
