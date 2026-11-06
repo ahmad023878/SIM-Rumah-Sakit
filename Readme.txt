@@ -1,3 +1,6 @@
+WEB APPLICATION DESIGN AND DEVELOPMENT PROJECT 
+Name: Ahmad Yani 
+Student ID (NIM): 26051640026
 How to run the Hospital-SIM Project Using PHP and MySQL
 
 1. Download the zip file
@@ -7,6 +10,7 @@ How to run the Hospital-SIM Project Using PHP and MySQL
 5. Create a database with name hms
 6. Import hms.sql file(given inside the zip package in SQL file folder)
 7. Run the script http://localhost:8080/hospital-sim/ (frontend)
+
 
 ***********Login Details***********
 
