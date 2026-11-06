@@ -1142,6 +1142,194 @@ if (!defined('HMS_HELPERS_LOADED')) {
         unset($_COOKIE[hms_auth_cookie_name()]);
     }
 
+
+    // -------------------------------------------------------------------------
+    // Doctor authentication bridge
+    // -------------------------------------------------------------------------
+    function hms_doctor_auth_cookie_name()
+    {
+        return 'hms_doctor_auth';
+    }
+
+    function hms_set_doctor_auth_cookie($id, $username)
+    {
+        $issued = time();
+        $payload = 'doctor|' . (int) $id . '|' . (string) $username . '|' . $issued;
+        $signature = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        $value = rtrim(
+            strtr(
+                base64_encode($payload . '|' . $signature),
+                '+/',
+                '-_'
+            ),
+            '='
+        );
+
+        setcookie(hms_doctor_auth_cookie_name(), $value, array(
+            'expires'  => $issued + 7200,
+            'path'     => hms_auth_cookie_path(),
+            'secure'   => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+    }
+
+    function hms_get_doctor_auth_cookie()
+    {
+        if (empty($_COOKIE[hms_doctor_auth_cookie_name()])) {
+            return null;
+        }
+
+        $encoded = strtr(
+            (string) $_COOKIE[hms_doctor_auth_cookie_name()],
+            '-_',
+            '+/'
+        );
+
+        $padding = strlen($encoded) % 4;
+
+        if ($padding) {
+            $encoded .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($encoded, true);
+
+        if ($decoded === false) {
+            return null;
+        }
+
+        $parts = explode('|', $decoded);
+
+        if (count($parts) !== 5) {
+            return null;
+        }
+
+        list($role, $id, $username, $issued, $signature) = $parts;
+
+        if (
+            $role !== 'doctor' ||
+            !ctype_digit((string) $id) ||
+            !ctype_digit((string) $issued)
+        ) {
+            return null;
+        }
+
+        $issued = (int) $issued;
+
+        if (
+            $issued <= 0 ||
+            (time() - $issued) > 7200 ||
+            $issued > (time() + 60)
+        ) {
+            return null;
+        }
+
+        $payload = 'doctor|' . $id . '|' . $username . '|' . $issued;
+        $expected = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        if (!hash_equals($expected, $signature)) {
+            return null;
+        }
+
+        return array(
+            'id'       => (int) $id,
+            'username' => $username,
+        );
+    }
+
+    function hms_make_doctor_ticket($id, $username)
+    {
+        $issued = time();
+        $payload = 'doctor|' . (int) $id . '|' . (string) $username . '|' . $issued;
+        $signature = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        return rtrim(
+            strtr(
+                base64_encode($payload . '|' . $signature),
+                '+/',
+                '-_'
+            ),
+            '='
+        );
+    }
+
+    function hms_get_doctor_ticket()
+    {
+        if (empty($_GET['doctor_auth'])) {
+            return null;
+        }
+
+        $encoded = strtr(
+            (string) $_GET['doctor_auth'],
+            '-_',
+            '+/'
+        );
+
+        $padding = strlen($encoded) % 4;
+
+        if ($padding) {
+            $encoded .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($encoded, true);
+
+        if ($decoded === false) {
+            return null;
+        }
+
+        $parts = explode('|', $decoded);
+
+        if (count($parts) !== 5) {
+            return null;
+        }
+
+        list($role, $id, $username, $issued, $signature) = $parts;
+
+        if (
+            $role !== 'doctor' ||
+            !ctype_digit((string) $id) ||
+            !ctype_digit((string) $issued)
+        ) {
+            return null;
+        }
+
+        $issued = (int) $issued;
+
+        if (
+            $issued <= 0 ||
+            (time() - $issued) > 7200 ||
+            $issued > (time() + 60)
+        ) {
+            return null;
+        }
+
+        $payload = 'doctor|' . $id . '|' . $username . '|' . $issued;
+        $expected = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        if (!hash_equals($expected, $signature)) {
+            return null;
+        }
+
+        return array(
+            'id'       => (int) $id,
+            'username' => $username,
+        );
+    }
+
+    function hms_clear_doctor_auth_cookie()
+    {
+        setcookie(hms_doctor_auth_cookie_name(), '', array(
+            'expires'  => time() - 3600,
+            'path'     => hms_auth_cookie_path(),
+            'secure'   => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+
+        unset($_COOKIE[hms_doctor_auth_cookie_name()]);
+    }
+
 function hms_redirect($location)
     {
         // Preserve the admin authentication handoff for internal relative
