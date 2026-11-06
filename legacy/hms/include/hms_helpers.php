@@ -1292,6 +1292,140 @@ function hms_flash($type, $message)
         return $flash;
     }
 
+
+    // -------------------------------------------------------------------------
+    // Session-based CAPTCHA for public authentication forms
+    // -------------------------------------------------------------------------
+    function hms_captcha_session_key($scope)
+    {
+        $scope = preg_replace('/[^a-z0-9_-]/i', '', (string) $scope);
+        return 'hms_captcha_' . ($scope !== '' ? strtolower($scope) : 'default');
+    }
+
+    function hms_captcha_generate_code($length = 5)
+    {
+        $alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $max = strlen($alphabet) - 1;
+        $code = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $code .= $alphabet[random_int(0, $max)];
+        }
+
+        return $code;
+    }
+
+    function hms_captcha_refresh($scope)
+    {
+        session();
+
+        $key = hms_captcha_session_key($scope);
+
+        $_SESSION[$key] = array(
+            'code'       => hms_captcha_generate_code(),
+            'created_at' => time(),
+        );
+
+        return $_SESSION[$key]['code'];
+    }
+
+    function hms_captcha_code($scope)
+    {
+        session();
+
+        $key = hms_captcha_session_key($scope);
+        $captcha = isset($_SESSION[$key]) && is_array($_SESSION[$key])
+            ? $_SESSION[$key]
+            : null;
+
+        $expired = !$captcha
+            || empty($captcha['code'])
+            || empty($captcha['created_at'])
+            || (time() - (int) $captcha['created_at']) > 600;
+
+        if ($expired) {
+            return hms_captcha_refresh($scope);
+        }
+
+        return (string) $captcha['code'];
+    }
+
+    function hms_captcha_question($scope)
+    {
+        hms_captcha_code($scope);
+        return 'Masukkan kode CAPTCHA yang ditampilkan.';
+    }
+
+    function hms_captcha_image($scope)
+    {
+        $code = hms_captcha_code($scope);
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="220" height="54" viewBox="0 0 220 54">'
+             . '<rect width="220" height="54" rx="7" fill="#f1f5f9"/>'
+             . '<path d="M8 15 L212 39 M8 39 L212 15" stroke="#cbd5e1" stroke-width="1"/>'
+             . '<text x="110" y="35" text-anchor="middle" '
+             . 'font-family="monospace" font-size="25" font-weight="700" '
+             . 'letter-spacing="7" fill="#17324d">'
+             . hms_e($code)
+             . '</text></svg>';
+
+        return '<div aria-label="CAPTCHA" style="display:flex;align-items:center;">'
+             . $svg
+             . '</div>';
+    }
+
+    function hms_captcha_field($scope)
+    {
+        return '<input type="text" class="form-control" '
+             . 'id="captcha" name="captcha" '
+             . 'autocomplete="off" autocapitalize="characters" '
+             . 'spellcheck="false" maxlength="8" required '
+             . 'aria-label="Kode CAPTCHA">';
+    }
+
+    function hms_captcha_refresh_button($scope)
+    {
+        $href = '?captcha_refresh=1';
+
+        return '<a class="btn btn-outline-secondary d-flex align-items-center" '
+             . 'href="' . hms_e($href) . '" '
+             . 'title="Muat ulang CAPTCHA" aria-label="Muat ulang CAPTCHA">'
+             . '<i class="bi bi-arrow-clockwise"></i>'
+             . '</a>';
+    }
+
+    function hms_verify_captcha($scope)
+    {
+        session();
+
+        $key = hms_captcha_session_key($scope);
+        $captcha = isset($_SESSION[$key]) && is_array($_SESSION[$key])
+            ? $_SESSION[$key]
+            : null;
+
+        $submitted = isset($_POST['captcha'])
+            ? strtoupper(trim((string) $_POST['captcha']))
+            : '';
+
+        $valid = $captcha
+            && !empty($captcha['code'])
+            && !empty($captcha['created_at'])
+            && (time() - (int) $captcha['created_at']) <= 600
+            && $submitted !== ''
+            && hash_equals(
+                strtoupper((string) $captcha['code']),
+                $submitted
+            );
+
+        hms_captcha_refresh($scope);
+
+        if (!$valid) {
+            hms_flash('danger', 'Kode CAPTCHA tidak valid atau sudah kedaluwarsa.');
+        }
+
+        return $valid;
+    }
+
     function hms_csrf_token()
     {
         session();
