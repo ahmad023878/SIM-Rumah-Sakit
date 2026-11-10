@@ -1142,6 +1142,194 @@ if (!defined('HMS_HELPERS_LOADED')) {
         unset($_COOKIE[hms_auth_cookie_name()]);
     }
 
+
+    // -------------------------------------------------------------------------
+    // Doctor authentication bridge
+    // -------------------------------------------------------------------------
+    function hms_doctor_auth_cookie_name()
+    {
+        return 'hms_doctor_auth';
+    }
+
+    function hms_set_doctor_auth_cookie($id, $username)
+    {
+        $issued = time();
+        $payload = 'doctor|' . (int) $id . '|' . (string) $username . '|' . $issued;
+        $signature = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        $value = rtrim(
+            strtr(
+                base64_encode($payload . '|' . $signature),
+                '+/',
+                '-_'
+            ),
+            '='
+        );
+
+        setcookie(hms_doctor_auth_cookie_name(), $value, array(
+            'expires'  => $issued + 7200,
+            'path'     => hms_auth_cookie_path(),
+            'secure'   => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+    }
+
+    function hms_get_doctor_auth_cookie()
+    {
+        if (empty($_COOKIE[hms_doctor_auth_cookie_name()])) {
+            return null;
+        }
+
+        $encoded = strtr(
+            (string) $_COOKIE[hms_doctor_auth_cookie_name()],
+            '-_',
+            '+/'
+        );
+
+        $padding = strlen($encoded) % 4;
+
+        if ($padding) {
+            $encoded .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($encoded, true);
+
+        if ($decoded === false) {
+            return null;
+        }
+
+        $parts = explode('|', $decoded);
+
+        if (count($parts) !== 5) {
+            return null;
+        }
+
+        list($role, $id, $username, $issued, $signature) = $parts;
+
+        if (
+            $role !== 'doctor' ||
+            !ctype_digit((string) $id) ||
+            !ctype_digit((string) $issued)
+        ) {
+            return null;
+        }
+
+        $issued = (int) $issued;
+
+        if (
+            $issued <= 0 ||
+            (time() - $issued) > 7200 ||
+            $issued > (time() + 60)
+        ) {
+            return null;
+        }
+
+        $payload = 'doctor|' . $id . '|' . $username . '|' . $issued;
+        $expected = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        if (!hash_equals($expected, $signature)) {
+            return null;
+        }
+
+        return array(
+            'id'       => (int) $id,
+            'username' => $username,
+        );
+    }
+
+    function hms_make_doctor_ticket($id, $username)
+    {
+        $issued = time();
+        $payload = 'doctor|' . (int) $id . '|' . (string) $username . '|' . $issued;
+        $signature = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        return rtrim(
+            strtr(
+                base64_encode($payload . '|' . $signature),
+                '+/',
+                '-_'
+            ),
+            '='
+        );
+    }
+
+    function hms_get_doctor_ticket()
+    {
+        if (empty($_GET['doctor_auth'])) {
+            return null;
+        }
+
+        $encoded = strtr(
+            (string) $_GET['doctor_auth'],
+            '-_',
+            '+/'
+        );
+
+        $padding = strlen($encoded) % 4;
+
+        if ($padding) {
+            $encoded .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($encoded, true);
+
+        if ($decoded === false) {
+            return null;
+        }
+
+        $parts = explode('|', $decoded);
+
+        if (count($parts) !== 5) {
+            return null;
+        }
+
+        list($role, $id, $username, $issued, $signature) = $parts;
+
+        if (
+            $role !== 'doctor' ||
+            !ctype_digit((string) $id) ||
+            !ctype_digit((string) $issued)
+        ) {
+            return null;
+        }
+
+        $issued = (int) $issued;
+
+        if (
+            $issued <= 0 ||
+            (time() - $issued) > 7200 ||
+            $issued > (time() + 60)
+        ) {
+            return null;
+        }
+
+        $payload = 'doctor|' . $id . '|' . $username . '|' . $issued;
+        $expected = hash_hmac('sha256', $payload, hms_auth_secret());
+
+        if (!hash_equals($expected, $signature)) {
+            return null;
+        }
+
+        return array(
+            'id'       => (int) $id,
+            'username' => $username,
+        );
+    }
+
+    function hms_clear_doctor_auth_cookie()
+    {
+        setcookie(hms_doctor_auth_cookie_name(), '', array(
+            'expires'  => time() - 3600,
+            'path'     => hms_auth_cookie_path(),
+            'secure'   => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+
+        unset($_COOKIE[hms_doctor_auth_cookie_name()]);
+    }
+
 function hms_redirect($location)
     {
         // Preserve the admin authentication handoff for internal relative
@@ -1290,6 +1478,140 @@ function hms_flash($type, $message)
         $flash = isset($_SESSION['hms_flash']) ? $_SESSION['hms_flash'] : null;
         unset($_SESSION['hms_flash']);
         return $flash;
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Session-based CAPTCHA for public authentication forms
+    // -------------------------------------------------------------------------
+    function hms_captcha_session_key($scope)
+    {
+        $scope = preg_replace('/[^a-z0-9_-]/i', '', (string) $scope);
+        return 'hms_captcha_' . ($scope !== '' ? strtolower($scope) : 'default');
+    }
+
+    function hms_captcha_generate_code($length = 5)
+    {
+        $alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $max = strlen($alphabet) - 1;
+        $code = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $code .= $alphabet[random_int(0, $max)];
+        }
+
+        return $code;
+    }
+
+    function hms_captcha_refresh($scope)
+    {
+        session();
+
+        $key = hms_captcha_session_key($scope);
+
+        $_SESSION[$key] = array(
+            'code'       => hms_captcha_generate_code(),
+            'created_at' => time(),
+        );
+
+        return $_SESSION[$key]['code'];
+    }
+
+    function hms_captcha_code($scope)
+    {
+        session();
+
+        $key = hms_captcha_session_key($scope);
+        $captcha = isset($_SESSION[$key]) && is_array($_SESSION[$key])
+            ? $_SESSION[$key]
+            : null;
+
+        $expired = !$captcha
+            || empty($captcha['code'])
+            || empty($captcha['created_at'])
+            || (time() - (int) $captcha['created_at']) > 600;
+
+        if ($expired) {
+            return hms_captcha_refresh($scope);
+        }
+
+        return (string) $captcha['code'];
+    }
+
+    function hms_captcha_question($scope)
+    {
+        hms_captcha_code($scope);
+        return 'Masukkan kode CAPTCHA yang ditampilkan.';
+    }
+
+    function hms_captcha_image($scope)
+    {
+        $code = hms_captcha_code($scope);
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="220" height="54" viewBox="0 0 220 54">'
+             . '<rect width="220" height="54" rx="7" fill="#f1f5f9"/>'
+             . '<path d="M8 15 L212 39 M8 39 L212 15" stroke="#cbd5e1" stroke-width="1"/>'
+             . '<text x="110" y="35" text-anchor="middle" '
+             . 'font-family="monospace" font-size="25" font-weight="700" '
+             . 'letter-spacing="7" fill="#17324d">'
+             . hms_e($code)
+             . '</text></svg>';
+
+        return '<div aria-label="CAPTCHA" style="display:flex;align-items:center;">'
+             . $svg
+             . '</div>';
+    }
+
+    function hms_captcha_field($scope)
+    {
+        return '<input type="text" class="form-control" '
+             . 'id="captcha" name="captcha" '
+             . 'autocomplete="off" autocapitalize="characters" '
+             . 'spellcheck="false" maxlength="8" required '
+             . 'aria-label="Kode CAPTCHA">';
+    }
+
+    function hms_captcha_refresh_button($scope)
+    {
+        $href = '?captcha_refresh=1';
+
+        return '<a class="btn btn-outline-secondary d-flex align-items-center" '
+             . 'href="' . hms_e($href) . '" '
+             . 'title="Muat ulang CAPTCHA" aria-label="Muat ulang CAPTCHA">'
+             . '<i class="bi bi-arrow-clockwise"></i>'
+             . '</a>';
+    }
+
+    function hms_verify_captcha($scope)
+    {
+        session();
+
+        $key = hms_captcha_session_key($scope);
+        $captcha = isset($_SESSION[$key]) && is_array($_SESSION[$key])
+            ? $_SESSION[$key]
+            : null;
+
+        $submitted = isset($_POST['captcha'])
+            ? strtoupper(trim((string) $_POST['captcha']))
+            : '';
+
+        $valid = $captcha
+            && !empty($captcha['code'])
+            && !empty($captcha['created_at'])
+            && (time() - (int) $captcha['created_at']) <= 600
+            && $submitted !== ''
+            && hash_equals(
+                strtoupper((string) $captcha['code']),
+                $submitted
+            );
+
+        hms_captcha_refresh($scope);
+
+        if (!$valid) {
+            hms_flash('danger', 'Kode CAPTCHA tidak valid atau sudah kedaluwarsa.');
+        }
+
+        return $valid;
     }
 
     function hms_csrf_token()
