@@ -1,35 +1,35 @@
 <?php
 session();
 include 'include/config.php';
-hms_require_role('doctor', 'logout.php');
-
-$doctorId = (int) $_SESSION['id'];
+hms_require_role('admin', 'logout.php');
 
 if (isset($_POST['submit'])) {
     hms_verify_csrf();
     $current = isset($_POST['cpass']) ? (string) $_POST['cpass'] : '';
     $new = isset($_POST['npass']) ? (string) $_POST['npass'] : '';
     $confirm = isset($_POST['cfpass']) ? (string) $_POST['cfpass'] : '';
-    $doctor = hms_fetch_one($con, 'SELECT password FROM doctors WHERE id = ?', 'i', array($doctorId));
+    $username = isset($_SESSION['login']) ? $_SESSION['login'] : '';
+    $admin = hms_fetch_one($con, 'SELECT id, password FROM admin WHERE username = ?', 's', array($username));
 
-    if (!$doctor || !hms_password_matches($current, $doctor['password'])) {
+    if (!$admin || !hms_password_matches($current, $admin['password'])) {
         hms_flash('danger', 'Kata sandi saat ini does not match.');
     } elseif ($new === '' || $new !== $confirm) {
         hms_flash('danger', 'Kata sandi baru and confirm password must match.');
     } else {
         $hash = password_hash($new, PASSWORD_DEFAULT);
-        hms_execute($con, 'UPDATE doctors SET password = ?, updationDate = NOW() WHERE id = ?', 'si', array($hash, $doctorId));
+        hms_execute($con, 'UPDATE admin SET password = ?, updationDate = NOW() WHERE username = ?', 'ss', array($hash, $username));
+        hms_log_audit($con, 'admin', (int) $admin['id'], 'admin_password_changed', 'admin', (int) $admin['id'], 'Admin changed password.');
         hms_flash('success', 'Kata sandi berhasil diubah.');
     }
     hms_redirect('change-password.php');
 }
 
-hms_layout_header('Ubah Kata Sandi', 'doctor', 'dashboard');
+hms_layout_header('Ubah Kata Sandi', 'admin', 'dashboard');
 ?>
 <div class="hms-page-title">
     <div>
         <h1>Ubah Kata Sandi</h1>
-        <p class="text-muted mb-0">Protect your doctor account with a strong password.</p>
+        <p class="text-muted mb-0">Protect the administrator account with a strong password.</p>
     </div>
 </div>
 

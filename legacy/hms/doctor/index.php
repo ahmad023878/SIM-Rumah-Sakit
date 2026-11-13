@@ -3,76 +3,66 @@ session();
 include 'include/config.php';
 
 if (isset($_GET['captcha_refresh'])) {
-    hms_captcha_refresh('doctor');
+    hms_captcha_refresh('admin');
     hms_redirect(basename(__FILE__));
 }
 
 if (isset($_POST['submit'])) {
-    if (!hms_verify_captcha('doctor')) {
+    if (!hms_verify_captcha('admin')) {
         hms_redirect('index.php');
     }
-    // Login is a credential endpoint. Keep the login flow usable even when an
-    // old/stale browser session contains a CSRF token from a previous build.
-    // All authenticated state-changing doctor pages continue to require CSRF.
-    $email = hms_post('username');
+    hms_verify_csrf();
+    $username = hms_post('username');
     $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
-    $doctor = hms_fetch_one($con, 'SELECT * FROM doctors WHERE docEmail = ?', 's', array($email));
-    $ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+    $admin = hms_fetch_one($con, 'SELECT * FROM admin WHERE username = ?', 's', array($username));
 
-    if ($doctor && hms_password_matches($password, $doctor['password'])) {
-        // Gunakan session service CodeIgniter sebagai sumber utama.
-        // Hal ini penting karena dashboard memeriksa session()->get().
-        $session = session();
-        $session->regenerate(true);
-        // Hapus konteks autentikasi lama sebelum menetapkan dokter yang baru login.
-        $session->remove(['dlogin', 'login', 'id', 'role']);
-        unset($_SESSION['dlogin'], $_SESSION['login'], $_SESSION['id'], $_SESSION['role']);
-        $session->set([
-            'dlogin' => $email,
-            'login'  => $email,
-            'id'     => (int) $doctor['id'],
-            'role'   => 'doctor',
+    if ($admin && hms_password_matches($password, $admin['password'])) {
+        session()->regenerate(true);
+        session()->set([
+            'login' => $username,
+            'id'    => (int) $admin['id'],
+            'role'  => 'admin',
         ]);
 
-        // Pertahankan kompatibilitas dengan kode legacy yang membaca $_SESSION.
-        $_SESSION['dlogin'] = $email;
-        $_SESSION['login'] = $email;
-        $_SESSION['id'] = (int) $doctor['id'];
-        $_SESSION['role'] = 'doctor';
-        hms_set_doctor_auth_cookie((int) $doctor['id'], $email);
+        // Legacy pages and CI4 must see the same authentication state.
+        $_SESSION['login'] = $username;
+        $_SESSION['id'] = (int) $admin['id'];
+        $_SESSION['role'] = 'admin';
 
-        if (hms_password_needs_upgrade($doctor['password'])) {
-            hms_upgrade_password($con, 'doctors', 'id', (int) $doctor['id'], $password);
+        hms_set_admin_auth_cookie((int) $admin['id'], $username);
+
+        // Keep a short-lived signed handoff in the redirect URL so the first
+        // dashboard request can authenticate even if an old browser/session
+        // cookie is stale or the CI4 session was regenerated.
+        $adminTicket = hms_make_admin_ticket((int) $admin['id'], $username);
+
+        if (hms_password_needs_upgrade($admin['password'])) {
+            hms_upgrade_password($con, 'admin', 'id', (int) $admin['id'], $password);
         }
 
-        hms_execute($con, 'INSERT INTO doctorslog(uid, username, userip, status) VALUES(?, ?, ?, ?)', 'issi', array((int) $doctor['id'], $email, $ip, 1));
-        $ticket = hms_make_doctor_ticket((int) $doctor['id'], $email);
-        hms_redirect(rtrim(base_url(), '/') . '/hms/doctor/dashboard.php?doctor_auth=' . rawurlencode($ticket));
+        hms_log_audit($con, 'admin', (int) $admin['id'], 'admin_login', 'admin', (int) $admin['id'], 'Admin logged in.');
+        hms_redirect(base_url('hms/admin/dashboard.php?auth=' . rawurlencode($adminTicket)));
     }
 
-    hms_execute($con, 'INSERT INTO doctorslog(username, userip, status) VALUES(?, ?, ?)', 'ssi', array($email, $ip, 0));
-    hms_flash('danger', 'Email atau kata sandi tidak valid.');
+    hms_flash('danger', 'Nama pengguna atau kata sandi tidak valid.');
     hms_redirect('index.php');
 }
 
-$captchaQuestion = hms_captcha_question('doctor');
+$captchaQuestion = hms_captcha_question('admin');
 
-hms_auth_header('Login Dokter', 'Login Dokter', 'Tinjau janji temu hari ini, resep, dan rekam perawatan pasien.', '../../index.php');
+hms_auth_header('Login Admin', 'Login Admin', 'Kelola janji temu, dokter, laporan, notifikasi, dan log audit.', '../../index.php');
 ?>
 <form method="post" class="mt-4">
     <?php echo hms_csrf_field(); ?>
     <div class="mb-3">
-        <label class="form-label" for="username">Alamat Email</label>
+        <label class="form-label" for="username">Nama Pengguna</label>
         <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-            <input type="email" class="form-control" id="username" name="username" autocomplete="email" required>
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" class="form-control" id="username" name="username" autocomplete="username" required>
         </div>
     </div>
-    <div class="mb-3">
-        <div class="d-flex justify-content-between gap-3">
-            <label class="form-label" for="password">Kata Sandi</label>
-            <a class="small" href="forgot-password.php">Lupa kata sandi?</a>
-        </div>
+    <div class="mb-4">
+        <label class="form-label" for="password">Kata Sandi</label>
         <div class="input-group">
             <span class="input-group-text"><i class="bi bi-lock"></i></span>
             <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
@@ -81,10 +71,10 @@ hms_auth_header('Login Dokter', 'Login Dokter', 'Tinjau janji temu hari ini, res
     <div class="mb-3">
         <label class="form-label" for="captcha">Kode CAPTCHA</label>
         <div style="display:flex;align-items:stretch;gap:8px;max-width:390px;">
-            <?php echo hms_captcha_image('doctor'); ?>
-            <?php echo hms_captcha_refresh_button('doctor'); ?>
+            <?php echo hms_captcha_image('admin'); ?>
+            <?php echo hms_captcha_refresh_button('admin'); ?>
         </div>
-        <div class="mt-2" style="max-width:390px;"><?php echo hms_captcha_field('doctor'); ?></div>
+        <div class="mt-2" style="max-width:390px;"><?php echo hms_captcha_field('admin'); ?></div>
         <div class="form-text">Ketik kode yang terlihat pada gambar CAPTCHA.</div>
     </div>
     <button type="submit" class="btn btn-primary w-100" name="submit">

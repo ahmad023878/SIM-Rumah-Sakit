@@ -1,8 +1,8 @@
 <?php
 require_once('include/config.php');
-if (!empty($_POST['email'])) {
-    $email = hms_post('email');
-    $count = (int) hms_scalar($con, 'SELECT COUNT(*) FROM tblpatient WHERE PatientEmail = ?', 's', array($email));
+if (!empty($_POST['emailid'])) {
+    $email = hms_post('emailid');
+    $count = (int) hms_scalar($con, 'SELECT COUNT(*) FROM doctors WHERE docEmail = ?', 's', array($email));
     if ($count > 0) {
         echo "<span style='color:red'> Email sudah terdaftar.</span>";
         echo "<script>$('#submit').prop('disabled',true);</script>";

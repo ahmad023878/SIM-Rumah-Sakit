@@ -1,24 +1,26 @@
 <?php
 session();
 include 'include/config.php';
-hms_require_role('doctor', 'logout.php');
+hms_require_role('admin', 'logout.php');
 
-$doctorId = (int) $_SESSION['id'];
-$patients = hms_fetch_all($con, 'SELECT * FROM tblpatient WHERE Docid = ? ORDER BY ID DESC', 'i', array($doctorId));
+$patients = hms_fetch_all(
+    $con,
+    'SELECT p.*, d.doctorName FROM tblpatient p LEFT JOIN doctors d ON d.id = p.Docid ORDER BY p.ID DESC'
+);
 
-hms_layout_header('Kelola Pasien', 'doctor', 'patients');
+hms_layout_header('Kelola Pasien', 'admin', 'patients');
 ?>
 <div class="hms-page-title">
     <div>
         <h1>Kelola Pasien</h1>
-        <p class="text-muted mb-0">Lihat, update, and review patients assigned to you.</p>
+        <p class="text-muted mb-0">Review patient records entered by doctors.</p>
     </div>
-    <a class="btn btn-primary" href="add-patient.php"><i class="bi bi-person-plus me-1"></i>Tambah Patient</a>
+    <a class="btn btn-outline-primary" href="patient-search.php"><i class="bi bi-search me-1"></i>Advanced Cari</a>
 </div>
 
 <div class="hms-card p-4">
     <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
-        <h2 class="h5 mb-0">Patient List</h2>
+        <h2 class="h5 mb-0">Pasien</h2>
         <input type="search" class="form-control" style="max-width: 320px;" placeholder="Cari patients..." data-table-search="#patientsTable">
     </div>
     <div class="table-responsive">
@@ -27,6 +29,7 @@ hms_layout_header('Kelola Pasien', 'doctor', 'patients');
             <tr>
                 <th data-sort>#</th>
                 <th data-sort>Patient</th>
+                <th data-sort>Doctor</th>
                 <th data-sort>Contact</th>
                 <th data-sort>Gender</th>
                 <th data-sort>Created</th>
@@ -39,18 +42,18 @@ hms_layout_header('Kelola Pasien', 'doctor', 'patients');
                 <tr>
                     <td><?php echo $index + 1; ?></td>
                     <td class="fw-semibold"><?php echo hms_e($patient['PatientName']); ?></td>
+                    <td><?php echo hms_e($patient['doctorName'] ?: 'Not assigned'); ?></td>
                     <td><?php echo hms_e($patient['PatientContno']); ?></td>
                     <td><?php echo hms_e($patient['PatientGender']); ?></td>
                     <td><?php echo hms_e($patient['CreationDate']); ?></td>
                     <td><?php echo hms_e($patient['UpdationDate'] ?: 'Not updated'); ?></td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" href="edit-patient.php?editid=<?php echo (int) $patient['ID']; ?>"><i class="bi bi-pencil-square"></i></a>
                         <a class="btn btn-sm btn-outline-secondary" href="view-patient.php?viewid=<?php echo (int) $patient['ID']; ?>"><i class="bi bi-eye"></i></a>
                     </td>
                 </tr>
             <?php } ?>
             <?php if (!$patients) { ?>
-                <tr><td colspan="7" class="text-center text-muted py-4">No patients found.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">No patients found.</td></tr>
             <?php } ?>
             </tbody>
         </table>

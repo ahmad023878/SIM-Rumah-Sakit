@@ -1,143 +1,127 @@
 <?php
-// Doctor dashboard authentication: use the signed handoff ticket created only
-// after a successful doctor login. This is the authoritative handoff for this
-// legacy page; no legacy role redirect is performed while a valid ticket exists.
 session();
-require_once __DIR__ . '/../include/config.php';
-if (!isset($con) || !($con instanceof mysqli)) {
-    $con = $GLOBALS['con'] ?? null;
-}
-if (!($con instanceof mysqli)) {
-    throw new RuntimeException('Koneksi database MySQL tidak tersedia.');
-}
+include('include/config.php');
 
-$doctorId = 0;
-$doctorEmail = '';
+hms_require_role('admin', 'logout.php');
 
-if (defined('HMS_DOCTOR_AUTH_VERIFIED') && HMS_DOCTOR_AUTH_VERIFIED === true) {
-    $doctorId = (int) $_SESSION['id'];
-    $doctorEmail = (string) $_SESSION['login'];
-} else {
-    $ticket = isset($_GET['doctor_auth']) ? (string) $_GET['doctor_auth'] : '';
-    if ($ticket !== '' && function_exists('hms_get_doctor_ticket')) {
-        $ticketData = hms_get_doctor_ticket();
-        if ($ticketData !== null) {
-            $check = mysqli_prepare($con, 'SELECT id, docEmail FROM doctors WHERE id = ? AND docEmail = ? LIMIT 1');
-            if ($check) {
-                $checkId = (int) $ticketData['id'];
-                $checkEmail = (string) $ticketData['username'];
-                mysqli_stmt_bind_param($check, 'is', $checkId, $checkEmail);
-                mysqli_stmt_execute($check);
-                mysqli_stmt_store_result($check);
-                if (mysqli_stmt_num_rows($check) === 1) {
-                    $doctorId = $checkId;
-                    $doctorEmail = $checkEmail;
-                }
-                mysqli_stmt_close($check);
-            }
-        }
-    }
-
-    if ($doctorId <= 0) {
-        $s = session();
-        $doctorId = (int) $s->get('id');
-        $doctorEmail = (string) $s->get('login');
-        if ($doctorId <= 0 || $s->get('role') !== 'doctor') {
-            $doctorId = isset($_SESSION['id']) ? (int) $_SESSION['id'] : 0;
-            $doctorEmail = isset($_SESSION['login']) ? (string) $_SESSION['login'] : '';
-        }
-    }
-
-    if ($doctorId <= 0) {
-        header('Location: ' . base_url('hms/doctor/index.php'));
-        exit;
-    }
-
-    $s = session();
-    $s->set(['id' => $doctorId, 'login' => $doctorEmail, 'dlogin' => $doctorEmail, 'role' => 'doctor']);
-    $_SESSION['id'] = $doctorId;
-    $_SESSION['login'] = $doctorEmail;
-    $_SESSION['dlogin'] = $doctorEmail;
-    $_SESSION['role'] = 'doctor';
-}
 $statusExpr = hms_appointment_status_expr($con, 'a');
 $stats = array(
-    'today' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM appointment WHERE doctorId = ? AND appointmentDate = CURDATE()', 'i', array($doctorId)),
-    'pending' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM appointment a WHERE a.doctorId = ? AND ' . $statusExpr . ' = "Pending"', 'i', array($doctorId)),
-    'completed' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM appointment a WHERE a.doctorId = ? AND ' . $statusExpr . ' = "Completed"', 'i', array($doctorId)),
-    'patients' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM tblpatient WHERE Docid = ?', 'i', array($doctorId))
+    'users' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM users'),
+    'doctors' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM doctors'),
+    'patients' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM tblpatient'),
+    'appointments' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM appointment'),
+    'new_queries' => (int) hms_scalar($con, 'SELECT COUNT(*) FROM tblcontactus WHERE IsRead IS NULL')
 );
-$stats['followups'] = hms_table_exists($con, 'prescriptions')
-    ? (int) hms_scalar($con, 'SELECT COUNT(*) FROM prescriptions WHERE doctor_id = ? AND followup_date >= CURDATE()', 'i', array($doctorId))
-    : 0;
 
-$todaysAppointments = hms_fetch_all(
+$statusRows = hms_fetch_all(
     $con,
-    'SELECT a.id, a.appointmentDate, a.appointmentTime, a.doctorSpecialization, a.consultancyFees, ' . $statusExpr . ' AS status_name, u.fullName, u.email
+    'SELECT ' . $statusExpr . ' AS status_name, COUNT(*) AS total FROM appointment a GROUP BY status_name ORDER BY total DESC'
+);
+$statusLabels = array();
+$statusTotals = array();
+foreach ($statusRows as $row) {
+    $statusLabels[] = hms_translate_text($row['status_name']);
+    $statusTotals[] = (int) $row['total'];
+}
+
+$recentAppointments = hms_fetch_all(
+    $con,
+    'SELECT a.id, a.doctorSpecialization, a.consultancyFees, a.appointmentDate, a.appointmentTime, a.postingDate, ' . $statusExpr . ' AS status_name, d.doctorName, u.fullName
      FROM appointment a
+     JOIN doctors d ON d.id = a.doctorId
      JOIN users u ON u.id = a.userId
-     WHERE a.doctorId = ? AND a.appointmentDate = CURDATE()
-     ORDER BY a.appointmentTime ASC, a.id ASC',
-    'i',
-    array($doctorId)
+     ORDER BY a.id DESC
+     LIMIT 6'
 );
 
-$followups = array();
-if (hms_table_exists($con, 'prescriptions')) {
-    $followups = hms_fetch_all(
+$recentActivities = array();
+if (hms_table_exists($con, 'audit_logs')) {
+    $recentActivities = hms_fetch_all(
         $con,
-        'SELECT p.followup_date, p.diagnosis, u.fullName
-         FROM prescriptions p
-         JOIN users u ON u.id = p.patient_user_id
-         WHERE p.doctor_id = ? AND p.followup_date >= CURDATE()
-         ORDER BY p.followup_date ASC
-         LIMIT 5',
-        'i',
-        array($doctorId)
+        'SELECT actor_type, action, entity_type, entity_id, details, created_at FROM audit_logs ORDER BY id DESC LIMIT 6'
     );
 }
 
-hms_layout_header('Dasbor Dokter', 'doctor', 'dashboard');
+$unreadNotifications = hms_table_exists($con, 'notifications')
+    ? (int) hms_scalar($con, 'SELECT COUNT(*) FROM notifications WHERE user_type = "admin" AND is_read = 0')
+    : 0;
+
+hms_layout_header('Dasbor Admin', 'admin', 'dashboard');
 ?>
 <div class="hms-page-title">
     <div>
-        <h1>Dasbor Dokter</h1>
-        <div class="text-muted">Hari Ini’s schedule, prescription work, and follow-up planning.</div>
+        <h1>Dasbor Admin</h1>
+        <div class="text-muted">Ringkasan operasional, alur janji temu, dan aktivitas terbaru.</div>
     </div>
     <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-primary" href="availability.php"><i class="bi bi-clock-history me-1"></i>Ketersediaan</a>
-        <a class="btn btn-primary" href="prescriptions.php"><i class="bi bi-file-medical me-1"></i>Prescription</a>
+        <a class="btn btn-outline-primary" href="appointment-history.php"><i class="bi bi-calendar-check me-1"></i>Kelola Janji Temu</a>
+        <a class="btn btn-primary" href="doctor-availability.php"><i class="bi bi-clock-history me-1"></i>Ketersediaan Dokter</a>
     </div>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-sm-6 col-xl-3">
-        <a class="hms-card hms-stat d-block text-reset" href="appointment-history.php?date=<?php echo date('Y-m-d'); ?>">
-            <span class="icon"><i class="bi bi-calendar-day"></i></span>
-            <div class="value"><?php echo hms_e($stats['today']); ?></div>
-            <div class="label">Hari Ini</div>
+        <a class="hms-card hms-stat d-block text-reset" href="manage-users.php">
+            <span class="icon"><i class="bi bi-people"></i></span>
+            <div class="value"><?php echo hms_e($stats['users']); ?></div>
+            <div class="label">Pengguna Terdaftar</div>
         </a>
     </div>
     <div class="col-12 col-sm-6 col-xl-3">
-        <div class="hms-card hms-stat">
-            <span class="icon"><i class="bi bi-hourglass-split"></i></span>
-            <div class="value"><?php echo hms_e($stats['pending']); ?></div>
-            <div class="label">Pending</div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="hms-card hms-stat">
-            <span class="icon"><i class="bi bi-check2-circle"></i></span>
-            <div class="value"><?php echo hms_e($stats['completed']); ?></div>
-            <div class="label">Completed</div>
-        </div>
+        <a class="hms-card hms-stat d-block text-reset" href="manage-doctors.php">
+            <span class="icon"><i class="bi bi-person-badge"></i></span>
+            <div class="value"><?php echo hms_e($stats['doctors']); ?></div>
+            <div class="label">Dokter</div>
+        </a>
     </div>
     <div class="col-12 col-sm-6 col-xl-3">
         <a class="hms-card hms-stat d-block text-reset" href="manage-patient.php">
-            <span class="icon"><i class="bi bi-people"></i></span>
+            <span class="icon"><i class="bi bi-person-vcard"></i></span>
             <div class="value"><?php echo hms_e($stats['patients']); ?></div>
-            <div class="label">Pasien</div>
+            <div class="label">Rekam Pasien</div>
         </a>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <a class="hms-card hms-stat d-block text-reset" href="unread-queries.php">
+            <span class="icon"><i class="bi bi-chat-left-text"></i></span>
+            <div class="value"><?php echo hms_e($stats['new_queries']); ?></div>
+            <div class="label">Pertanyaan Baru</div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="hms-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Status Janji Temu</h2>
+                    <div class="text-muted small">Janji temu menunggu, disetujui, selesai, dan dibatalkan.</div>
+                </div>
+                <span class="badge text-bg-light"><?php echo hms_e($stats['appointments']); ?> total</span>
+            </div>
+            <canvas id="appointmentStatusChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="hms-card p-3 h-100">
+            <h2 class="h5 mb-3">Indikator</h2>
+            <div class="d-flex justify-content-between py-2 border-bottom">
+                <span class="text-muted">Notifikasi belum dibaca</span>
+                <strong><?php echo hms_e($unreadNotifications); ?></strong>
+            </div>
+            <div class="d-flex justify-content-between py-2 border-bottom">
+                <span class="text-muted">Pertanyaan kontak baru</span>
+                <strong><?php echo hms_e($stats['new_queries']); ?></strong>
+            </div>
+            <div class="d-flex justify-content-between py-2">
+                <span class="text-muted">Pencatatan audit</span>
+                <strong><?php echo hms_table_exists($con, 'audit_logs') ? 'Aktif' : 'Migrasi diperlukan'; ?></strong>
+            </div>
+            <div class="mt-3">
+                <a class="btn btn-outline-secondary w-100" href="notifications.php"><i class="bi bi-bell me-1"></i>Lihat Notifikasi</a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -145,35 +129,35 @@ hms_layout_header('Dasbor Dokter', 'doctor', 'dashboard');
     <div class="col-xl-8">
         <div class="hms-card p-3">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">Janji Temu Hari Ini</h2>
-                <input class="form-control form-control-sm" style="max-width:240px" placeholder="Cari" data-table-search="#todayTable">
+                <h2 class="h5 mb-0">Janji Temu Terbaru</h2>
+                <a class="btn btn-sm btn-outline-primary" href="appointment-history.php">Lihat Semua</a>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="todayTable" data-sortable>
+                <table class="table table-hover align-middle mb-0" data-sortable>
                     <thead>
                     <tr>
                         <th data-sort>Patient</th>
-                        <th data-sort>Waktu</th>
+                        <th data-sort>Doctor</th>
+                        <th data-sort>Tanggal</th>
                         <th data-sort>Status</th>
-                        <th class="text-end">Action</th>
+                        <th class="text-end">Fee</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($todaysAppointments as $appointment) { ?>
+                    <?php foreach ($recentAppointments as $appointment) { ?>
                         <tr>
+                            <td><?php echo hms_e($appointment['fullName']); ?></td>
                             <td>
-                                <div class="fw-semibold"><?php echo hms_e($appointment['fullName']); ?></div>
-                                <div class="small text-muted"><?php echo hms_e($appointment['email']); ?></div>
+                                <div class="fw-semibold"><?php echo hms_e($appointment['doctorName']); ?></div>
+                                <div class="small text-muted"><?php echo hms_e($appointment['doctorSpecialization']); ?></div>
                             </td>
-                            <td><?php echo hms_e($appointment['appointmentTime']); ?></td>
+                            <td><?php echo hms_e($appointment['appointmentDate']); ?> <?php echo hms_e($appointment['appointmentTime']); ?></td>
                             <td><?php echo hms_status_badge($appointment['status_name']); ?></td>
-                            <td class="text-end">
-                                <a class="btn btn-sm btn-outline-primary" href="prescriptions.php?appointment_id=<?php echo hms_e($appointment['id']); ?>">Record</a>
-                            </td>
+                            <td class="text-end"><?php echo hms_e($appointment['consultancyFees']); ?></td>
                         </tr>
                     <?php } ?>
-                    <?php if (!$todaysAppointments) { ?>
-                        <tr><td colspan="4" class="text-center text-muted py-4">No appointments scheduled for today.</td></tr>
+                    <?php if (!$recentAppointments) { ?>
+                        <tr><td colspan="5" class="text-center text-muted py-4">No appointments yet.</td></tr>
                     <?php } ?>
                     </tbody>
                 </table>
@@ -182,24 +166,44 @@ hms_layout_header('Dasbor Dokter', 'doctor', 'dashboard');
     </div>
     <div class="col-xl-4">
         <div class="hms-card p-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">Follow-ups</h2>
-                <span class="badge text-bg-light"><?php echo hms_e($stats['followups']); ?></span>
-            </div>
-            <?php if ($followups) { ?>
+            <h2 class="h5 mb-3">Aktivitas Terbaru</h2>
+            <?php if ($recentActivities) { ?>
                 <div class="timeline">
-                    <?php foreach ($followups as $followup) { ?>
+                    <?php foreach ($recentActivities as $activity) { ?>
                         <div class="timeline-item">
-                            <div class="fw-semibold"><?php echo hms_e($followup['fullName']); ?></div>
-                            <div class="small text-muted"><?php echo hms_e($followup['followup_date']); ?></div>
-                            <div class="small"><?php echo hms_e($followup['diagnosis']); ?></div>
+                            <div class="fw-semibold"><?php echo hms_e(ucwords(str_replace('_', ' ', $activity['action']))); ?></div>
+                            <div class="small text-muted"><?php echo hms_e($activity['actor_type']); ?> on <?php echo hms_e($activity['entity_type']); ?> #<?php echo hms_e($activity['entity_id']); ?></div>
+                            <div class="small"><?php echo hms_e($activity['details']); ?></div>
+                            <div class="small text-muted"><?php echo hms_e($activity['created_at']); ?></div>
                         </div>
                     <?php } ?>
                 </div>
             <?php } else { ?>
-                <div class="text-muted">No follow-up appointments recorded yet.</div>
+                <div class="text-muted">Apply the SQL migration to start recording audit activity.</div>
             <?php } ?>
         </div>
     </div>
 </div>
-<?php hms_layout_footer(); ?>
+<?php
+$chartScript = '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById("appointmentStatusChart"), {
+    type: "bar",
+    data: {
+        labels: ' . json_encode($statusLabels) . ',
+        datasets: [{
+            label: "Janji Temu",
+            data: ' . json_encode($statusTotals) . ',
+            backgroundColor: ["#f59e0b", "#127c8a", "#16a34a", "#64748b"],
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+});
+</script>';
+hms_layout_footer($chartScript);
+?>

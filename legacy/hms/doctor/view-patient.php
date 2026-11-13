@@ -1,11 +1,11 @@
 <?php
 session();
 include('include/config.php');
-hms_require_role('doctor', 'logout.php');
+hms_require_role('admin', 'logout.php');
 
-$doctorId = (int) $_SESSION['id'];
+$adminId = (int) $_SESSION['id'];
 $patientId = hms_int(hms_get('viewid'));
-$patient = hms_fetch_one($con, 'SELECT * FROM tblpatient WHERE ID = ? AND Docid = ?', 'ii', array($patientId, $doctorId));
+$patient = hms_fetch_one($con, 'SELECT * FROM tblpatient WHERE ID = ?', 'i', array($patientId));
 if (!$patient) {
     hms_flash('error', 'Rekam pasien tidak ditemukan.');
     hms_redirect('manage-patient.php');
@@ -13,29 +13,24 @@ if (!$patient) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     hms_verify_csrf();
-    $bp = hms_post('bp');
-    $bs = hms_post('bs');
-    $weight = hms_post('weight');
-    $temp = hms_post('temp');
-    $pres = hms_post('pres');
     hms_execute(
         $con,
         'INSERT INTO tblmedicalhistory(PatientID, BloodPressure, BloodSugar, Weight, Temperature, MedicalPres) VALUES(?, ?, ?, ?, ?, ?)',
         'isssss',
-        array($patientId, $bp, $bs, $weight, $temp, $pres)
+        array($patientId, hms_post('bp'), hms_post('bs'), hms_post('weight'), hms_post('temp'), hms_post('pres'))
     );
-    hms_log_audit($con, 'doctor', $doctorId, 'medical_history_added', 'tblpatient', $patientId, 'Riwayat medis berhasil ditambahkan.');
+    hms_log_audit($con, 'admin', $adminId, 'medical_history_added', 'tblpatient', $patientId, 'Admin added medical history.');
     hms_flash('success', 'Riwayat medis berhasil ditambahkan.');
     hms_redirect('view-patient.php?viewid=' . $patientId);
 }
 
 $history = hms_fetch_all($con, 'SELECT * FROM tblmedicalhistory WHERE PatientID = ? ORDER BY CreationDate DESC, ID DESC', 'i', array($patientId));
-hms_layout_header('Detail Pasien', 'doctor', 'patients');
+hms_layout_header('Detail Pasien', 'admin', 'patients');
 ?>
 <div class="hms-page-title">
     <div>
         <h1>Detail Pasien</h1>
-        <div class="text-muted">Diagnosis, treatment notes, and medical history timeline.</div>
+        <div class="text-muted">Administrative view of patient record and medical history.</div>
     </div>
     <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#historyModal">Tambah History</button>
 </div>
