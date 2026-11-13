@@ -24,6 +24,9 @@ $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
 $logs = $hasTable
     ? hms_fetch_all($con, 'SELECT * FROM audit_logs' . $whereSql . ' ORDER BY id DESC LIMIT 200', $types, $params)
     : array();
+$moduleLogs = hms_table_exists($con, 'hms_audit_events')
+    ? hms_fetch_all($con, 'SELECT * FROM hms_audit_events ORDER BY id DESC LIMIT 200')
+    : array();
 
 hms_layout_header('Log Audit', 'admin', 'audit');
 ?>
@@ -86,6 +89,28 @@ hms_layout_header('Log Audit', 'admin', 'audit');
             <?php if (!$logs) { ?>
                 <tr><td colspan="6" class="text-center text-muted py-4">Tidak ada aktivitas audit ditemukan.</td></tr>
             <?php } ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="hms-card p-3 mt-3">
+    <h2 class="h5">Audit Modul Pelayanan</h2>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Tanggal</th><th>Actor</th><th>Modul</th><th>Aksi</th><th>Data</th><th>IP</th></tr></thead>
+            <tbody>
+            <?php foreach ($moduleLogs as $log) { ?>
+                <tr>
+                    <td><?php echo hms_e($log['created_at']); ?></td>
+                    <td><?php echo hms_e(($log['actor_role'] ?: '-') . ' #' . ($log['actor_id'] ?: '-')); ?></td>
+                    <td><?php echo hms_e($log['module_name']); ?></td>
+                    <td><?php echo hms_e($log['action_name']); ?></td>
+                    <td><?php echo hms_e($log['description']); ?></td>
+                    <td><?php echo hms_e($log['ip_address']); ?></td>
+                </tr>
+            <?php } ?>
+            <?php if (!$moduleLogs) { ?><tr><td colspan="6" class="text-center text-muted py-4">Belum ada audit aktivitas modul pelayanan.</td></tr><?php } ?>
             </tbody>
         </table>
     </div>

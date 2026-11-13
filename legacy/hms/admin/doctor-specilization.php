@@ -2,97 +2,37 @@
 session();
 include 'include/config.php';
 hms_require_role('admin', 'logout.php');
+require_once __DIR__ . '/modules/simrs_integration_bootstrap.php';
+hms_int_bootstrap($con);
 
-if (isset($_POST['submit'])) {
-    hms_verify_csrf();
-    $specialization = hms_post('doctorspecilization');
-    if ($specialization === '') {
-        hms_flash('danger', 'Please enter a specialization.');
-    } else {
-        hms_execute($con, 'INSERT INTO doctorSpecilization(specilization) VALUES(?)', 's', array($specialization));
-        hms_log_audit($con, 'admin', (int) $_SESSION['id'], 'specialization_created', 'doctorSpecilization', mysqli_insert_id($con), 'Spesialisasi created: ' . $specialization);
-        hms_flash('success', 'Doctor specialization added successfully.');
-        hms_redirect('doctor-specilization.php');
-    }
-}
+$specializations = hms_fetch_all($con,
+    'SELECT id, poli_code, poli_name, is_active FROM hms_master_poli ORDER BY is_active DESC, poli_name ASC');
 
-if (isset($_POST['delete'])) {
-    hms_verify_csrf();
-    $id = hms_int(hms_post('id'));
-    if ($id > 0) {
-        hms_execute($con, 'DELETE FROM doctorSpecilization WHERE id = ?', 'i', array($id));
-        hms_log_audit($con, 'admin', (int) $_SESSION['id'], 'specialization_deleted', 'doctorSpecilization', $id, 'Spesialisasi deleted.');
-        hms_flash('success', 'Spesialisasi deleted successfully.');
-    }
-    hms_redirect('doctor-specilization.php');
-}
-
-$specializations = hms_fetch_all($con, 'SELECT * FROM doctorSpecilization ORDER BY id DESC');
-
-hms_layout_header('Doctor Spesialisasi', 'admin', 'doctors');
+hms_layout_header('Spesialisasi Dokter', 'admin', 'doctors');
 ?>
 <div class="hms-page-title">
     <div>
-        <h1>Doctor Spesialisasi</h1>
-        <p class="text-muted mb-0">Maintain the list of services used by doctor profiles.</p>
+        <h1>Spesialisasi Dokter</h1>
+        <p class="text-muted mb-0">Pilihan spesialisasi dokter menggunakan Master Poli sebagai sumber data utama.</p>
     </div>
+    <a class="btn btn-primary" href="master-poli-jadwal.php">Kelola Master Poli</a>
 </div>
-
-<div class="row g-4">
-    <div class="col-lg-5">
-        <div class="hms-card p-4">
-            <h2 class="h5 mb-3">Tambah Spesialisasi</h2>
-            <form method="post">
-                <?php echo hms_csrf_field(); ?>
-                <label class="form-label" for="doctorspecilization">Nama spesialisasi</label>
-                <input type="text" class="form-control" id="doctorspecilization" name="doctorspecilization" required>
-                <button type="submit" name="submit" class="btn btn-primary mt-3">
-                    <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-            </form>
-        </div>
-    </div>
-    <div class="col-lg-7">
-        <div class="hms-card p-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
-                <h2 class="h5 mb-0">Spesialisasi</h2>
-                <input type="search" class="form-control" style="max-width: 280px;" placeholder="Cari..." data-table-search="#specTable">
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle" id="specTable" data-sortable>
-                    <thead>
-                    <tr>
-                        <th data-sort>#</th>
-                        <th data-sort>Spesialisasi</th>
-                        <th data-sort>Created</th>
-                        <th data-sort>Updated</th>
-                        <th class="text-end">Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($specializations as $index => $row) { ?>
-                        <tr>
-                            <td><?php echo $index + 1; ?></td>
-                            <td class="fw-semibold"><?php echo hms_e($row['specilization']); ?></td>
-                            <td><?php echo hms_e($row['creationDate']); ?></td>
-                            <td><?php echo hms_e($row['updationDate'] ?: 'Not updated'); ?></td>
-                            <td class="text-end">
-                                <a class="btn btn-sm btn-outline-primary" href="edit-doctor-specialization.php?id=<?php echo (int) $row['id']; ?>"><i class="bi bi-pencil-square"></i></a>
-                                <form method="post" class="d-inline" onsubmit="return confirm('Hapus this specialization?');">
-                                    <?php echo hms_csrf_field(); ?>
-                                    <input type="hidden" name="id" value="<?php echo (int) $row['id']; ?>">
-                                    <button type="submit" name="delete" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                </form>
-                            </td>
-                        </tr>
-                    <?php } ?>
-                    <?php if (!$specializations) { ?>
-                        <tr><td colspan="5" class="text-center text-muted py-4">Tidak ada spesialisasi ditemukan.</td></tr>
-                    <?php } ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+<div class="alert alert-info">Penambahan dan perubahan poli dilakukan melalui Master Poli. Daftar ini tidak membuat data spesialisasi terpisah.</div>
+<div class="hms-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>Kode Poli</th><th>Nama Poli / Spesialisasi</th><th>Status</th></tr></thead>
+            <tbody>
+            <?php foreach ($specializations as $row) { ?>
+                <tr>
+                    <td><?php echo hms_e($row['poli_code']); ?></td>
+                    <td class="fw-semibold"><?php echo hms_e($row['poli_name']); ?></td>
+                    <td><?php echo ((int)$row['is_active'] === 1) ? 'Aktif' : 'Nonaktif'; ?></td>
+                </tr>
+            <?php } ?>
+            <?php if (!$specializations) { ?><tr><td colspan="3" class="text-center text-muted py-4">Belum ada Master Poli.</td></tr><?php } ?>
+            </tbody>
+        </table>
     </div>
 </div>
 <?php hms_layout_footer(); ?>

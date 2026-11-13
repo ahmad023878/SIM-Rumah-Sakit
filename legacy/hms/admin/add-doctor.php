@@ -2,6 +2,8 @@
 session();
 include 'include/config.php';
 hms_require_role('admin', 'logout.php');
+require_once __DIR__ . '/modules/simrs_integration_bootstrap.php';
+hms_int_bootstrap($con);
 
 if (isset($_POST['submit'])) {
     hms_verify_csrf();
@@ -14,8 +16,11 @@ if (isset($_POST['submit'])) {
     $password = isset($_POST['npass']) ? (string) $_POST['npass'] : '';
     $confirm = isset($_POST['cfpass']) ? (string) $_POST['cfpass'] : '';
 
-    if ($specialization === '' || $name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        hms_flash('danger', 'Please complete required doctor details.');
+    $validPoli = $specialization !== '' && (int) hms_scalar($con,
+        'SELECT COUNT(*) FROM hms_master_poli WHERE poli_name = ? AND is_active = 1',
+        's', array($specialization)) > 0;
+    if (!$validPoli || $name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        hms_flash('danger', 'Pilih spesialisasi dari Master Poli yang aktif dan lengkapi data dokter.');
     } elseif ($password === '' || $password !== $confirm) {
         hms_flash('danger', 'Kata sandi dan konfirmasi kata sandi harus sama.');
     } elseif ((int) hms_scalar($con, 'SELECT COUNT(*) FROM doctors WHERE docEmail = ?', 's', array($email)) > 0) {
@@ -37,16 +42,16 @@ if (isset($_POST['submit'])) {
     }
 }
 
-$specializations = hms_fetch_all($con, 'SELECT specilization FROM doctorspecilization ORDER BY specilization ASC');
+$specializations = hms_fetch_all($con, 'SELECT poli_name FROM hms_master_poli WHERE is_active = 1 ORDER BY poli_name ASC');
 
-hms_layout_header('Tambah Doctor', 'admin', 'doctors');
+hms_layout_header('Tambah Dokter', 'admin', 'doctors');
 ?>
 <div class="hms-page-title">
     <div>
-        <h1>Tambah Doctor</h1>
-        <p class="text-muted mb-0">Buat a doctor login and profile.</p>
+        <h1>Tambah Dokter</h1>
+        <p class="text-muted mb-0">Buat akun login dan profil dokter.</p>
     </div>
-    <a class="btn btn-light" href="manage-doctors.php">Kembali to Dokter</a>
+    <a class="btn btn-light" href="manage-doctors.php">Kembali ke Dokter</a>
 </div>
 
 <div class="hms-card p-4">
@@ -58,16 +63,16 @@ hms_layout_header('Tambah Doctor', 'admin', 'doctors');
                 <select class="form-select" id="Doctorspecialization" name="Doctorspecialization" required>
                     <option value="">Pilih spesialisasi</option>
                     <?php foreach ($specializations as $row) { ?>
-                        <option value="<?php echo hms_e($row['specilization']); ?>"><?php echo hms_e($row['specilization']); ?></option>
+                        <option value="<?php echo hms_e($row['poli_name']); ?>"><?php echo hms_e($row['poli_name']); ?></option>
                     <?php } ?>
                 </select>
             </div>
             <div class="col-md-6">
-                <label class="form-label" for="docname">Doctor name</label>
+                <label class="form-label" for="docname">Nama Dokter</label>
                 <input type="text" class="form-control" id="docname" name="docname" required>
             </div>
             <div class="col-md-6">
-                <label class="form-label" for="docfees">Consultancy fees</label>
+                <label class="form-label" for="docfees">Biaya Konsultasi</label>
                 <input type="number" min="0" step="0.01" class="form-control" id="docfees" name="docfees" required>
             </div>
             <div class="col-md-6">
@@ -87,12 +92,12 @@ hms_layout_header('Tambah Doctor', 'admin', 'doctors');
                 <input type="password" class="form-control" id="cfpass" name="cfpass" minlength="6" required>
             </div>
             <div class="col-12">
-                <label class="form-label" for="clinicaddress">Clinic address</label>
+                <label class="form-label" for="clinicaddress">Alamat Klinik</label>
                 <textarea class="form-control" id="clinicaddress" name="clinicaddress" rows="4" required></textarea>
             </div>
         </div>
         <button type="submit" name="submit" class="btn btn-primary mt-4">
-            <i class="bi bi-person-plus me-1"></i>Tambah Doctor
+            <i class="bi bi-person-plus me-1"></i>Tambah Dokter
         </button>
     </form>
 </div>
