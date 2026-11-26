@@ -4,6 +4,10 @@ include('include/config.php');
 include('include/checklogin.php');
 check_login();
 hms_require_role('patient', 'logout.php');
+require_once __DIR__ . '/admin/modules/module_bootstrap.php';
+require_once __DIR__ . '/admin/modules/simrs_integration_bootstrap.php';
+hms_module_bootstrap($con);
+hms_int_bootstrap($con);
 
 $userId = (int) $_SESSION['id'];
 $statusExpr = hms_appointment_status_expr($con, 'a');
@@ -19,6 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         hms_redirect('appointment-history.php');
     }
 
+    $linkedVisit = hms_fetch_one($con, 'SELECT id,status,arrived_at FROM hms_patient_visits WHERE appointment_id=? LIMIT 1', 'i', array($appointmentId));
+    if (in_array($action, array('cancel','reschedule'), true) && $linkedVisit && ($linkedVisit['status'] !== 'MENUNGGU' || !empty($linkedVisit['arrived_at']))) {
+        hms_flash('error', 'Janji temu tidak dapat diubah karena proses kunjungan sudah dimulai.');
+        hms_redirect('appointment-history.php');
+    }
+
     if ($action === 'cancel') {
         hms_set_appointment_status($con, $appointmentId, 'Cancelled', 'patient', $userId);
         hms_notify($con, 'admin', null, 'Janji Temu cancelled', 'Patient cancelled appointment #' . $appointmentId . '.');
@@ -30,9 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'reschedule') {
         $newDate = hms_post('appointment_date');
         $newTime = hms_normalize_time(hms_post('appointment_time'));
+        require_once __DIR__ . '/include/appointment_queue_bridge.php';
+        $poli = hms_fetch_one($con, 'SELECT id FROM hms_master_poli WHERE poli_name=? AND is_active=1 LIMIT 1', 's', array((string)$appointment['doctorSpecialization']));
         $reason = '';
-        if (!hms_doctor_available($con, (int) $appointment['doctorId'], $newDate, $newTime, $reason, $appointmentId)) {
-            hms_flash('error', $reason);
+        if (!$poli || !hms_bridge_validate_schedule($con, (int)$poli['id'], (int)$appointment['doctorId'], $newDate, $newTime, $appointmentId, $reason)) {
+            hms_flash('error', $poli ? $reason : 'Poli janji temu tidak lagi tersedia pada Master Poli. Hubungi admin untuk pemetaan poli.');
             hms_redirect('appointment-history.php');
         }
 
@@ -49,7 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $types .= 'i';
         $params[] = $appointmentId;
-        hms_execute($con, 'UPDATE appointment SET ' . implode(', ', $fields) . ' WHERE id = ?', $types, $params);
+        mysqli_begin_transaction($con);
+        try {
+            hms_execute($con, 'UPDATE appointment SET ' . implode(', ', $fields) . ' WHERE id = ?', $types, $params);
+            hms_bridge_sync_rescheduled_appointment($con, $appointmentId, (int)$poli['id']);
+            mysqli_commit($con);
+        } catch (Throwable $syncError) {
+            mysqli_rollback($con);
+            throw $syncError;
+        }
         hms_log_audit($con, 'patient', $userId, 'appointment_rescheduled', 'appointment', $appointmentId, 'Rescheduled to ' . $newDate . ' ' . $newTime);
         hms_notify($con, 'admin', null, 'Janji Temu rescheduled', 'Patient requested a new time for appointment #' . $appointmentId . '.');
         hms_notify($con, 'doctor', (int) $appointment['doctorId'], 'Janji Temu rescheduled', 'Janji Temu #' . $appointmentId . ' was moved to ' . $newDate . ' ' . $newTime . '.');
@@ -60,9 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $appointments = hms_fetch_all(
     $con,
-    'SELECT a.id, a.doctorSpecialization, a.consultancyFees, a.appointmentDate, a.appointmentTime, a.postingDate, ' . $statusExpr . ' AS status_name, d.doctorName, d.id AS doctor_id
+    'SELECT a.id, a.doctorSpecialization, a.consultancyFees, a.appointmentDate, a.appointmentTime, a.postingDate, ' . $statusExpr . ' AS status_name, d.doctorName, d.id AS doctor_id,
+            v.registration_no,v.queue_no,v.poli,v.status AS visit_status,v.arrived_at
      FROM appointment a
      JOIN doctors d ON d.id = a.doctorId
+     LEFT JOIN hms_patient_visits v ON v.appointment_id=a.id
      WHERE a.userId = ?
      ORDER BY a.appointmentDate DESC, a.id DESC',
     'i',
@@ -112,7 +134,7 @@ hms_layout_header('Janji Temu Saya', 'patient', 'appointments');
             </thead>
             <tbody>
             <?php foreach ($appointments as $appointment) {
-                $isClosed = in_array($appointment['status_name'], array('Cancelled', 'Completed'), true);
+                $isClosed = in_array($appointment['status_name'], array('Cancelled', 'Completed'), true) || (!empty($appointment['visit_status']) && ($appointment['visit_status'] !== 'MENUNGGU' || !empty($appointment['arrived_at'])));
                 ?>
                 <tr>
                     <td><?php echo hms_e($appointment['id']); ?></td>
@@ -121,7 +143,12 @@ hms_layout_header('Janji Temu Saya', 'patient', 'appointments');
                         <div class="small text-muted"><?php echo hms_e($appointment['doctorSpecialization']); ?> | Fee: <?php echo hms_e($appointment['consultancyFees']); ?></div>
                     </td>
                     <td><?php echo hms_e($appointment['appointmentDate']); ?> <?php echo hms_e($appointment['appointmentTime']); ?></td>
-                    <td><?php echo hms_status_badge($appointment['status_name']); ?></td>
+                    <td><?php echo hms_status_badge($appointment['status_name']); ?>
+                        <?php if(!empty($appointment['registration_no'])){ ?>
+                          <div class="small text-muted mt-1">Antrean <?php echo hms_e($appointment['queue_no']?:'-'); ?> · <?php echo hms_e($appointment['poli']?:'-'); ?></div>
+                          <div class="small">Status kunjungan: <?php echo hms_status_badge($appointment['visit_status']); ?></div>
+                        <?php } ?>
+                    </td>
                     <td class="text-end">
                         <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
                             <?php if (isset($prescriptionByAppointment[(int) $appointment['id']])) { ?>

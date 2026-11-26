@@ -32,6 +32,7 @@ if (isset($_POST['submit'])) {
         $_SESSION['id'] = (int) $user['id'];
         $_SESSION['role'] = 'patient';
         unset($_SESSION['dlogin']);
+        hms_set_patient_auth_cookie((int) $user['id'], $email);
 
         if (hms_password_needs_upgrade($user['password'])) {
             hms_upgrade_password($con, 'users', 'id', (int) $user['id'], $password);

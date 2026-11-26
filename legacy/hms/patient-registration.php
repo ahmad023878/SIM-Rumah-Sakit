@@ -9,6 +9,7 @@ session();
 require_once __DIR__ . '/include/config.php';
 require_once __DIR__ . '/admin/modules/module_bootstrap.php';
 require_once __DIR__ . '/admin/modules/simrs_integration_bootstrap.php';
+hms_module_bootstrap($con);
 hms_int_bootstrap($con);
 
 $flash = hms_get_flash();
@@ -138,14 +139,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'take_queue') {
             $mrn = strtoupper(trim($_POST['medical_record_no'] ?? ''));
             $phone = public_clean_phone($_POST['phone'] ?? '');
+            $mode = strtoupper(trim((string)($_POST['queue_mode'] ?? 'SCHEDULE')));
+            if (!in_array($mode, array('SCHEDULE','DIRECT'), true)) $mode = 'SCHEDULE';
             $scheduleId = (int)($_POST['schedule_id'] ?? 0);
+            $poliId = (int)($_POST['direct_poli_id'] ?? 0);
+            $doctorIdDirect = (int)($_POST['direct_doctor_id'] ?? 0);
             $serviceDate = trim($_POST['service_date'] ?? date('Y-m-d'));
 
             if ($mrn === '' || $phone === '' || strlen($phone) < 8) {
                 throw new RuntimeException('No. RM dan nomor HP wajib diisi.');
             }
-            if ($scheduleId <= 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $serviceDate)) {
-                throw new RuntimeException('Tanggal dan jadwal dokter wajib dipilih.');
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $serviceDate)) {
+                throw new RuntimeException('Tanggal kunjungan tidak valid.');
+            }
+            if ($mode === 'SCHEDULE' && $scheduleId <= 0) {
+                throw new RuntimeException('Pilih jadwal dokter terlebih dahulu.');
+            }
+            if ($mode === 'DIRECT' && ($poliId <= 0 || $doctorIdDirect <= 0)) {
+                throw new RuntimeException('Untuk pendaftaran tanpa jadwal, pilih poli dan dokter.');
+            }
+            if ($mode === 'DIRECT' && $serviceDate !== date('Y-m-d')) {
+                throw new RuntimeException('Pendaftaran langsung tanpa jadwal hanya untuk kunjungan hari ini.');
             }
             if ($serviceDate < date('Y-m-d')) {
                 throw new RuntimeException('Tanggal pelayanan tidak boleh sebelum hari ini.');
@@ -158,6 +172,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             if (!$patient) throw new RuntimeException('Data pasien tidak ditemukan. Periksa No. RM dan nomor HP.');
 
+            if ($mode === 'DIRECT') {
+                $poli = hms_fetch_one($con, 'SELECT id,poli_name FROM hms_master_poli WHERE id=? AND is_active=1 LIMIT 1', 'i', array($poliId));
+                $doctor = hms_fetch_one($con, 'SELECT id,doctorName FROM doctors WHERE id=? LIMIT 1', 'i', array($doctorIdDirect));
+                if (!$poli || !$doctor) throw new RuntimeException('Poli atau dokter tidak ditemukan/ tidak aktif.');
+                mysqli_begin_transaction($con);
+                $existingDirect = hms_fetch_one($con,
+                    "SELECT id,registration_no,queue_no,poli,status FROM hms_patient_visits
+                     WHERE patient_id=? AND visit_date=? AND poli=? AND visit_type='RAWAT_JALAN'
+                       AND status IN ('MENUNGGU','DIPANGGIL','DILAYANI') LIMIT 1",
+                    'iss', array((int)$patient['ID'],$serviceDate,(string)$poli['poli_name']));
+                if ($existingDirect) {
+                    mysqli_commit($con);
+                    $queueTicket = array('registration_no'=>$existingDirect['registration_no'],'queue_no'=>$existingDirect['queue_no'],
+                        'poli'=>$existingDirect['poli'],'patient_name'=>$patient['PatientName'],'mrn'=>$patient['medical_record_no'],'existing'=>true,'direct'=>true);
+                    hms_set_flash('warning','Pasien sudah memiliki antrean aktif pada poli ini hari ini: '.$existingDirect['queue_no']);
+                } else {
+                    $regNo = hms_module_next_code($con, 'hms_patient_visits', 'REG', 'id');
+                    $queueNo = hms_module_next_queue($con, (string)$poli['poli_name'], $serviceDate);
+                    $patientId = (int)$patient['ID']; $mrType = 'LAMA'; $poliName = (string)$poli['poli_name'];
+                    $counter = 'Portal Publik - Tanpa Jadwal'; $selectedDoctor = (int)$doctor['id'];
+                    $st = mysqli_prepare($con,
+                        "INSERT INTO hms_patient_visits
+                         (patient_id,mr_type,registration_no,visit_date,visit_type,poli,doctor_id,queue_no,source,status,registration_counter,arrived_at)
+                         VALUES(?,?,?,?,'RAWAT_JALAN',?,?,?,'ONLINE','MENUNGGU',?,NULL)");
+                    if (!$st) throw new RuntimeException('Gagal menyiapkan antrean tanpa jadwal.');
+                    mysqli_stmt_bind_param($st,'issssiss',$patientId,$mrType,$regNo,$serviceDate,$poliName,$selectedDoctor,$queueNo,$counter);
+                    if (!mysqli_stmt_execute($st)) { mysqli_stmt_close($st); throw new RuntimeException('Antrean tanpa jadwal gagal dibuat.'); }
+                    $visitId = (int)mysqli_stmt_insert_id($st); mysqli_stmt_close($st);
+                    mysqli_commit($con);
+                    hms_module_audit($con,'CREATE','ANTREAN_PUBLIK','hms_patient_visits',$visitId,'Antrean langsung tanpa jadwal dibuat.',null,
+                        array('registration_no'=>$regNo,'queue_no'=>$queueNo,'poli'=>$poliName,'doctor_id'=>$selectedDoctor,'service_date'=>$serviceDate));
+                    hms_module_workflow_event($con,$patientId,$visitId,null,null,'ANTRIAN','MENUNGGU','Antrean langsung tanpa jadwal dibuat; menunggu check-in petugas.');
+                    $queueTicket = array('registration_no'=>$regNo,'queue_no'=>$queueNo,'poli'=>$poliName,
+                        'patient_name'=>$patient['PatientName'],'mrn'=>$patient['medical_record_no'],'existing'=>false,'direct'=>true);
+                    hms_set_flash('success','Antrean langsung '.$queueNo.' berhasil dibuat. Silakan check-in kepada petugas sebelum dipanggil.');
+                }
+            } else {
             $day = (int)date('w', strtotime($serviceDate));
             mysqli_begin_transaction($con);
             $schedule = hms_fetch_one($con,
@@ -221,6 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'patient_name'=>$patient['PatientName'],'mrn'=>$patient['medical_record_no'],'existing'=>false);
                 hms_set_flash('success','Nomor antrean '.$queueNo.' berhasil dibuat untuk '.$schedule['doctorName'].' pada '.$serviceDate.'.');
             }
+            }
         }
     } catch (Throwable $e) {
         if ($con && mysqli_get_connection_stats($con) !== false) {
@@ -232,6 +284,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $flash = hms_get_flash();
 }
+
+$publicPolies = hms_fetch_all($con, 'SELECT id,poli_name FROM hms_master_poli WHERE is_active=1 ORDER BY poli_name');
+$publicDoctors = hms_fetch_all($con, 'SELECT id,doctorName,specilization FROM doctors ORDER BY doctorName');
 
 $publicSchedules = hms_fetch_all($con,
     "SELECT s.id,s.poli_id,s.doctor_id,s.day_of_week,
@@ -381,7 +436,10 @@ body{background:#f5f8fb;color:#17324d}
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">No. RM *</label><input name="medical_record_no" class="form-control" value="<?php echo hms_e($_GET['mrn'] ?? ''); ?>" required></div>
 <div class="col-md-4"><label class="form-label">Nomor HP *</label><input name="phone" class="form-control" value="<?php echo hms_e($_GET['phone'] ?? ($registered['phone'] ?? '')); ?>" required></div>
-<div class="col-md-3"><label class="form-label">Tanggal Kunjungan *</label><input type="date" name="service_date" id="publicServiceDate" class="form-control" min="<?php echo date('Y-m-d'); ?>" value="<?php echo date('Y-m-d'); ?>" required></div><div class="col-md-5"><label class="form-label">Poli / Dokter / Jadwal *</label><select name="schedule_id" id="publicSchedule" class="form-select" required><option value="">Pilih jadwal dokter</option><?php foreach($publicSchedules as $sc){ ?><option value="<?php echo (int)$sc['id']; ?>" data-day="<?php echo (int)$sc['day_of_week']; ?>" data-date="<?php echo hms_e($sc['available_date']??''); ?>"><?php echo hms_e($sc['poli_name'] . ' — ' . $sc['doctorName'] . ' (' . substr($sc['start_time'],0,5) . '-' . substr($sc['end_time'],0,5) . ') | Kuota ' . $sc['quota']); ?></option><?php } ?></select><div class="form-text">Jadwal ditampilkan dari master jadwal dokter yang aktif.</div></div>
+<div class="col-md-3"><label class="form-label">Tanggal Kunjungan *</label><input type="date" name="service_date" id="publicServiceDate" class="form-control" min="<?php echo date('Y-m-d'); ?>" value="<?php echo date('Y-m-d'); ?>" required></div><div class="col-md-4"><label class="form-label">Cara Pendaftaran *</label><select name="queue_mode" id="publicQueueMode" class="form-select"><option value="SCHEDULE">Pilih jadwal dokter</option><option value="DIRECT">Datang langsung tanpa jadwal</option></select></div>
+<div class="col-md-4" id="directPoliWrap" hidden><label class="form-label">Poli *</label><select name="direct_poli_id" id="directPoli" class="form-select"><option value="">Pilih poli</option><?php foreach($publicPolies as $po){ ?><option value="<?php echo (int)$po['id']; ?>"><?php echo hms_e($po['poli_name']); ?></option><?php } ?></select></div>
+<div class="col-md-4" id="directDoctorWrap" hidden><label class="form-label">Dokter *</label><select name="direct_doctor_id" id="directDoctor" class="form-select"><option value="">Pilih dokter</option><?php foreach($publicDoctors as $doc){ ?><option value="<?php echo (int)$doc['id']; ?>"><?php echo hms_e($doc['doctorName'].' - '.$doc['specilization']); ?></option><?php } ?></select></div>
+<div class="col-md-5" id="scheduleWrap"><label class="form-label">Poli / Dokter / Jadwal *</label><select name="schedule_id" id="publicSchedule" class="form-select" required><option value="">Pilih jadwal dokter</option><?php foreach($publicSchedules as $sc){ ?><option value="<?php echo (int)$sc['id']; ?>" data-day="<?php echo (int)$sc['day_of_week']; ?>" data-date="<?php echo hms_e($sc['available_date']??''); ?>"><?php echo hms_e($sc['poli_name'] . ' — ' . $sc['doctorName'] . ' (' . substr($sc['start_time'],0,5) . '-' . substr($sc['end_time'],0,5) . ') | Kuota ' . $sc['quota']); ?></option><?php } ?></select><div class="form-text">Jadwal ditampilkan dari master jadwal dokter yang aktif.</div></div>
 <div class="col-12"><button class="btn btn-success btn-lg"><i class="bi bi-ticket-perforated me-1"></i>Ambil Nomor Antrean</button></div>
 </div>
 </form>
@@ -399,7 +457,7 @@ body{background:#f5f8fb;color:#17324d}
     <?php if ($queueTicket['existing']) { ?>
         <div class="alert alert-warning mt-3 mb-0">Antrean aktif yang sudah ada ditampilkan kembali. Sistem tidak membuat antrean ganda.</div>
     <?php } else { ?>
-        <div class="alert alert-success mt-3 mb-0">Antrean berhasil dibuat. Silakan datang sesuai arahan rumah sakit.</div>
+        <div class="alert alert-success mt-3 mb-0"><?php echo !empty($queueTicket['direct']) ? 'Antrean langsung tanpa jadwal berhasil dibuat. Silakan check-in kepada petugas sebelum dokter memanggil.' : 'Antrean berhasil dibuat. Silakan datang sesuai arahan rumah sakit.'; ?></div>
     <?php } ?>
     <div class="mt-3"><button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Cetak Bukti Antrean</button></div>
 </div>
@@ -416,7 +474,10 @@ body{background:#f5f8fb;color:#17324d}
 <script>
 (function(){
  const date=document.getElementById('publicServiceDate'), select=document.getElementById('publicSchedule');
- if(!date||!select)return;
+ const mode=document.getElementById('publicQueueMode'), scheduleWrap=document.getElementById('scheduleWrap');
+ const directPoliWrap=document.getElementById('directPoliWrap'), directDoctorWrap=document.getElementById('directDoctorWrap');
+ const directPoli=document.getElementById('directPoli'), directDoctor=document.getElementById('directDoctor');
+ if(!date||!select||!mode)return;
  const options=Array.from(select.options).slice(1);
  const placeholder=select.options[0];
  function filter(){
@@ -446,7 +507,16 @@ body{background:#f5f8fb;color:#17324d}
    }
    select.disabled=(visible===0);
  }
- date.addEventListener('change',filter);filter();
+ function toggleMode(){
+   const direct=mode.value==='DIRECT';
+   scheduleWrap.hidden=direct; directPoliWrap.hidden=!direct; directDoctorWrap.hidden=!direct;
+   select.required=!direct; select.disabled=direct;
+   directPoli.required=direct; directDoctor.required=direct;
+   if(direct){select.value='';}
+   filter();
+ }
+ mode.addEventListener('change',toggleMode);
+ date.addEventListener('change',filter);filter();toggleMode();
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
