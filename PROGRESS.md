@@ -82,11 +82,14 @@ Admin, Dokter, Pasien tampil dari database dan kolom pencarian dapat memfilter s
 | P2 | [penyempurnaan] | [bukti yang dapat diuji] |[
 	Mengintregation semua ke appointmen schedule dokter
 ]
+ P2 | [penyempurnaan] | [bukti yang dapat diuji] |[
+	Prediksi Adaboost dan Fuzzy Mandani
+]
 
 #### 7. Pertanyaan untuk dosen
 
 - [tuliskan pertanyaan spesifik, atau "Tidak ada"]
-
+- cara yang terbaik untuk menambahkan adaboost dan fuzzy mandani apakah terpisah modulnya atau didlam SIMRS
 ---
 
 <!-- Tambahkan laporan minggu berikutnya DI ATAS laporan minggu sebelumnya. Pertahankan catatan lama sebagai riwayat. Umpan balik dosen dicatat melalui komentar PR atau GitHub Issue. -->
