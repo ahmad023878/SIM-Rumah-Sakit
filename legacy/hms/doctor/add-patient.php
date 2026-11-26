@@ -1,89 +1,72 @@
 <?php
+// Doctor-facing patient picker: reuse appointment/queue records; do not create duplicate tblpatient rows.
 session();
 include 'include/config.php';
 hms_require_role('doctor', 'logout.php');
 
-$doctorId = (int) $_SESSION['id'];
+$doctorId = (int)($_SESSION['id'] ?? 0);
+$visits = hms_fetch_all($con,
+    "SELECT v.id AS visit_id, v.registration_no, v.queue_no, v.visit_date, v.visit_type,
+            v.poli, v.status, v.source, v.appointment_id, p.PatientName, p.PatientContno,
+            p.PatientEmail, p.medical_record_no, a.appointmentDate, a.appointmentTime, a.status AS appointment_status
+     FROM hms_patient_visits v
+     JOIN tblpatient p ON p.ID=v.patient_id
+     LEFT JOIN appointment a ON a.id=v.appointment_id
+     WHERE v.doctor_id=? AND v.visit_type='RAWAT_JALAN'
+       AND v.status IN ('DIPANGGIL','DILAYANI')
+     ORDER BY v.visit_date DESC, v.id DESC LIMIT 300",
+    'i', array($doctorId));
 
-if (isset($_POST['submit'])) {
-    hms_verify_csrf();
-    $name = hms_post('patname');
-    $contact = hms_post('patcontact');
-    $email = hms_post('patemail');
-    $gender = hms_post('gender');
-    $address = hms_post('pataddress');
-    $age = hms_post('patage');
-    $history = hms_post('medhis');
-
-    if ($name === '' || $contact === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        hms_flash('danger', 'Please enter patient name, contact number, and a valid email.');
-    } else {
-        $created = hms_execute(
-            $con,
-            'INSERT INTO tblpatient(Docid, PatientName, PatientContno, PatientEmail, PatientGender, PatientAdd, PatientAge, PatientMedhis) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
-            'isssssss',
-            array($doctorId, $name, $contact, $email, $gender, $address, $age, $history)
-        );
-        if ($created !== false) {
-            hms_log_audit($con, 'doctor', $doctorId, 'patient_created', 'tblpatient', mysqli_insert_id($con), 'Patient created: ' . $name);
-            hms_flash('success', 'Patient added successfully.');
-            hms_redirect('manage-patient.php');
-        }
-        hms_flash('danger', 'Unable to add patient.');
-    }
-}
-
-hms_layout_header('Tambah Patient', 'doctor', 'patients');
+hms_layout_header('Pilih Pasien untuk RME', 'doctor', 'patients');
 ?>
 <div class="hms-page-title">
     <div>
-        <h1>Tambah Patient</h1>
-        <p class="text-muted mb-0">Buat a patient record under your doctor account.</p>
+        <h1>Pilih Pasien untuk RME / SOAP</h1>
+        <p class="text-muted mb-0">Pasien diambil dari janji temu dan antrean rawat jalan dokter. Tidak membuat pasien baru atau menggandakan data pasien.</p>
     </div>
-    <a class="btn btn-light" href="manage-patient.php">Kembali to Pasien</a>
+    <a class="btn btn-light" href="visit-queue.php">Kembali ke Antrean</a>
 </div>
-
 <div class="hms-card p-4">
-    <form method="post">
+    <?php if (!$visits) { ?>
+        <div class="alert alert-info mb-0">Belum ada pasien pada antrean yang berstatus DIPANGGIL atau DILAYANI. Panggil pasien terlebih dahulu dari menu Antrean Pasien Saya.</div>
+    <?php } else { ?>
+    <form method="post" action="outpatient.php" id="rmeVisitPicker">
         <?php echo hms_csrf_field(); ?>
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="form-label" for="patname">Patient name</label>
-                <input type="text" class="form-control" id="patname" name="patname" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label" for="patcontact">Contact number</label>
-                <input type="text" class="form-control" id="patcontact" name="patcontact" maxlength="15" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label" for="patemail">Email</label>
-                <input type="email" class="form-control" id="patemail" name="patemail" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label" for="gender">Gender</label>
-                <select class="form-select" id="gender" name="gender" required>
-                    <option value="">Select</option>
-                    <option value="Perempuan">Perempuan</option>
-                    <option value="Laki-laki">Laki-laki</option>
-                    <option value="Lainnya">Lainnya</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label" for="patage">Age</label>
-                <input type="number" min="0" max="130" class="form-control" id="patage" name="patage" required>
-            </div>
-            <div class="col-12">
-                <label class="form-label" for="pataddress">Alamat</label>
-                <textarea class="form-control" id="pataddress" name="pataddress" rows="3" required></textarea>
-            </div>
-            <div class="col-12">
-                <label class="form-label" for="medhis">Medical history</label>
-                <textarea class="form-control" id="medhis" name="medhis" rows="4" required></textarea>
-            </div>
+        <input type="hidden" name="action" value="create">
+        <div class="mb-3">
+            <label for="visitSearch" class="form-label">Cari pasien (nama, RM, nomor registrasi, antrean, poli)</label>
+            <input type="search" class="form-control" id="visitSearch" placeholder="Ketik untuk mencari..." autocomplete="off">
         </div>
-        <button type="submit" name="submit" class="btn btn-primary mt-4">
-            <i class="bi bi-person-plus me-1"></i>Tambah Patient
-        </button>
+        <div class="mb-3">
+            <label for="visit_id" class="form-label">Nama Pasien / Kunjungan</label>
+            <select class="form-select" name="visit_id" id="visit_id" size="8" required>
+                <option value="">-- Pilih pasien dari antrean --</option>
+                <?php foreach ($visits as $v) {
+                    $label = ($v['medical_record_no'] ?: 'RM-'.$v['visit_id']) . ' | ' . $v['PatientName'] . ' | ' . ($v['registration_no'] ?: '-') . ' | Antrean ' . ($v['queue_no'] ?: '-') . ' | ' . ($v['poli'] ?: '-') . ' | ' . $v['visit_date'] . ' | ' . $v['status'];
+                ?>
+                    <option value="<?php echo (int)$v['visit_id']; ?>" data-search="<?php echo hms_e(strtolower($label)); ?>">
+                        <?php echo hms_e($label); ?>
+                    </option>
+                <?php } ?>
+            </select>
+            <div class="form-text">Daftar ini menggunakan kunjungan yang sudah DIPANGGIL atau DILAYANI dan hanya milik dokter yang login.</div>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-clipboard2-pulse me-1"></i> Buka SOAP / RME Pasien</button>
     </form>
+    <?php } ?>
 </div>
+<script>
+(function(){
+ const search=document.getElementById('visitSearch');
+ const select=document.getElementById('visit_id');
+ if(!search||!select)return;
+ search.addEventListener('input',function(){
+   const q=this.value.trim().toLowerCase();
+   Array.from(select.options).forEach(function(opt,index){
+     if(index===0){opt.hidden=false;return;}
+     opt.hidden=!(opt.dataset.search||opt.text.toLowerCase()).includes(q);
+   });
+ });
+})();
+</script>
 <?php hms_layout_footer(); ?>
