@@ -36,19 +36,23 @@
 
 - [X] [Target 1]
 - [X] [Target 2]
-- [ ] [Target 3]
+- [X] [Target 3]
 
 #### 2. Pekerjaan yang sudah selesai
 
 - [x] [Fitur/perbaikan yang benar-benar telah dikerjakan dan diverifikasi]||[Layanan, M2-Queue & waiting-time instrumentation] 
 - [x] [Fitur/perbaikan lain, jika ada] - [Antrin registrasi Pasein]
+- [x] [Fitur/perbaikan lain, jika ada] - [M3-Adaboot]
+- [x] [Fitur/perbaikan lain, jika ada] - M4-Fuzzy Mandani]
+- [x] [Fitur/perbaikan lain, jika ada] - [M5-Hybrid]
+
 
 #### 3. Pekerjaan yang belum selesai / masih error
 
 | Fitur / pekerjaan | Kondisi saat ini | Kendala atau pesan error ringkas | Upaya yang sudah dicoba | Bantuan yang dibutuhkan |
 |M03|AdaBoost service-duration prediction|---|---|---|
 | [fitur] | [Belum selesai / Error / Diblokir] | [uraian tanpa data rahasia] | [uraian] | [uraian] |
-AdaBoost service-duration prediction ke Apointmen
+
 #### 4. Hasil pengujian
 
 | Pengujian | Hasil | Bukti / catatan |
@@ -59,11 +63,13 @@ AdaBoost service-duration prediction ke Apointmen
 [Admin dapat melihat appointment] |[Sudah diuji]|[sudah bisa melihat appointment]
 [perubahan status terlihat kembali oleh Patient]|[Sudah diuji]|[Sudah bisa lihat] 
 [M2 Queue & waiting-time instrumentation]|[Sudah Diuji]|[Bisa dilihat hasil M2]
+[M3 Adaboost]|[Sudah Diuji]|[Bisa dilihat hasil M3]
+[M4 Fuzzy Mandani]|[Sudah Diuji]|[Bisa dilihat hasil M3]
 
 #### 5. Tindak lanjut review dosen sebelumnya
 
 - [x] [Saran yang sudah ditindaklanjuti, dengan tautan commit/PR bila ada]
-- [ ] [Saran yang belum ditindaklanjuti dan alasannya]
+- [X] [Saran yang belum ditindaklanjuti dan alasannya]
 
 #### 6. Rencana lima hari kerja berikutnya
 
