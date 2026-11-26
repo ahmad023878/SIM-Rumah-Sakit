@@ -1,0 +1,231 @@
+visit_id,visit_date,poli,doctor_id,source,queue_no,registration_hour,weekday,month,service_duration_minutes
+3,2026-11-11,Dokter Spesialis Bedah,35,OFFLINE,100-03,11,2,11,39
+5,2026-11-28,Dokter Spesialis Penyakit Jiwa,49,ONLINE,111-05,8,5,11,45
+9,2026-11-18,Dokter Spesialis Orthopaedi & Traumatologi (Eksekutif),57,ONLINE,059-11,11,2,11,36
+10,2026-11-24,Dokter Spesialis Jantung,44,OFFLINE,078-31,10,1,11,44
+11,2026-11-26,Dokter Spesialis Saraf,15,OFFLINE,006-27,10,3,11,24
+12,2026-11-23,RADIOLOGI,46,ONLINE,120-05,18,0,11,12
+13,2026-11-02,Dokter Spesialis Saraf,30,ONLINE,064-05,11,0,11,51
+14,2026-11-23,Dokter Spesialis THT,43,ONLINE,041-11,9,0,11,34
+16,2026-11-13,Uji Kesehatan PNS (Paket),34,ONLINE,051-14,9,4,11,33
+17,2026-11-09,Dokter Spesialis Periodonti,63,ONLINE,083-40,9,0,11,34
+21,2026-11-12,Dokter Spesialis Urologi,51,ONLINE,036-32,8,3,11,48
+24,2026-11-27,Dokter Spesialis Kandungan (Eksekutif),53,ONLINE,073-30,11,4,11,42
+26,2026-11-04,GCU : Surat Sehat Jasmani + Rohani,45,OFFLINE,048-04,10,2,11,44
+28,2026-11-23,Dokter Spesialis Anak,32,ONLINE,116-02,9,0,11,12
+29,2026-11-16,Dokter Spesialis Penyakit Dalam (Eksekutif),35,ONLINE,139-19,14,0,11,36
+31,2026-11-23,Uji Kesehatan PNS (Paket),41,ONLINE,092-13,11,0,11,13
+32,2026-11-23,Dokter Spesialis Umum,58,ONLINE,096-22,12,0,11,13
+33,2026-11-20,Dokter Spesialis Penyakit Dalam (Eksekutif),24,OFFLINE,012-13,11,4,11,19
+34,2026-11-05,Dokter Spesialis Anak,18,ONLINE,043-12,10,3,11,10
+35,2026-11-06,Dokter Spesialis Penyakit Dalam (Eksekutif),35,OFFLINE,139-16,13,4,11,14
+37,2026-11-17,Dokter Spesialis Bedah,48,ONLINE,107-29,13,1,11,55
+38,2026-11-23,Dokter Spesialis Kandungan (Eksekutif),12,ONLINE,066-11,10,0,11,55
+39,2026-11-05,Dokter Spesialis Anak,12,ONLINE,003-07,13,3,11,23
+40,2026-11-16,Uji Kesehatan PNS (Paket),60,OFFLINE,035-22,9,0,11,30
+41,2026-11-06,Dokter Spesialis THT,38,ONLINE,128-36,10,4,11,18
+43,2026-11-20,Dokter Spesialis Saraf (Eksekutif),25,OFFLINE,101-28,11,4,11,24
+44,2026-11-09,Uji Kesehatan PNS (Paket),42,ONLINE,062-11,11,0,11,49
+45,2026-11-24,Tes Dewan,33,ONLINE,038-06,10,1,11,10
+46,2026-11-04,Dokter Spesialis THT,43,ONLINE,041-15,13,2,11,36
+47,2026-11-23,TUMBUH KEMBANG ANAK,12,ONLINE,054-25,8,0,11,20
+49,2026-11-24,Dokter Spesialis Fisioterapi,61,ONLINE,143-04,13,1,11,12
+50,2026-11-26,Dokter Spesialis Penyakit Dalam (Sore),22,ONLINE,030-04,16,3,11,30
+51,2026-11-19,Dokter Spesialis Penyakit Dalam (Sore),22,ONLINE,030-12,19,3,11,45
+52,2026-11-06,Uji Kesehatan PNS (Paket),54,OFFLINE,031-13,11,4,11,46
+55,2026-11-18,Dokter Spesialis Bedah,49,ONLINE,144-10,12,2,11,32
+56,2026-11-07,Dokter Spesialis Bedah,48,ONLINE,107-32,12,5,11,50
+57,2026-11-30,Dokter Spesialis Orthopaedi & Traumatologi,19,ONLINE,075-03,11,0,11,38
+58,2026-11-13,Dokter Spesialis Anak Sub. Kardiologi,31,ONLINE,019-15,10,4,11,39
+60,2026-11-20,Dokter Spesialis THT,38,ONLINE,128-22,9,4,11,16
+61,2026-11-16,Dokter Spesialis Kandungan,53,OFFLINE,045-12,9,0,11,20
+63,2026-11-30,Dokter Spesialis Paru,62,OFFLINE,115-05,8,0,11,47
+65,2026-11-18,Dokter Spesialis Kandungan (Eksekutif),53,OFFLINE,073-06,10,2,11,29
+66,2026-11-07,Dokter Spesialis Kandungan (Eksekutif),18,OFFLINE,119-25,9,5,11,42
+68,2026-11-17,Dokter Spesialis Anak (Eksekutif),26,OFFLINE,094-18,15,1,11,24
+70,2026-11-06,P. VK (Rajal),53,ONLINE,131-36,9,4,11,33
+71,2026-11-11,Tes Dewan,60,ONLINE,034-03,9,2,11,37
+72,2026-11-18,Dokter Spesialis Kandungan (Eksekutif),39,ONLINE,098-06,13,2,11,15
+73,2026-11-27,Dokter Spesialis Rehabilitasi Medik,24,ONLINE,118-30,9,4,11,28
+74,2026-11-04,Dokter Spesialis Anak Sub. Kardiologi,20,ONLINE,013-18,8,2,11,19
+76,2026-11-23,Uji Kesehatan PNS (Paket),60,ONLINE,035-05,13,0,11,55
+77,2026-11-10,Dokter Spesialis Orthopaedi & Traumatologi,57,ONLINE,090-34,8,1,11,14
+78,2026-11-12,Dokter Spesialis Kulit & Kelamin,55,ONLINE,053-04,8,3,11,32
+82,2026-12-01,Dokter Spesialis Umum Tes Kesehatan P3K,45,ONLINE,058-12,11,1,12,17
+84,2026-11-18,Dokter Spesialis Umum,15,ONLINE,123-21,11,2,11,28
+85,2026-11-24,Dokter Spesialis Kulit & Kelamin (Eksekutif),49,OFFLINE,029-15,14,1,11,32
+87,2026-11-24,Dokter Spesialis Penyakit Jiwa,11,OFFLINE,077-08,10,1,11,14
+89,2026-11-09,TUMBUH KEMBANG ANAK,12,ONLINE,054-17,8,0,11,41
+90,2026-11-11,Dokter Spesialis Gigi & Mulut,63,ONLINE,065-02,12,2,11,22
+91,2026-11-05,LABORATORIUM PATOLOGI KLINIK (SENTRAL),59,OFFLINE,141-03,18,3,11,55
+92,2026-11-27,Dokter Spesialis Bedah,35,ONLINE,100-07,10,4,11,17
+95,2026-11-06,Dokter Spesialis Gigi Anak,64,ONLINE,122-03,12,4,11,47
+96,2026-11-07,P. VK (Rajal),18,ONLINE,021-08,9,5,11,30
+97,2026-11-07,Dokter Spesialis Anak (Sore),20,ONLINE,020-03,18,5,11,44
+98,2026-11-12,GCU : Surat Sehat Jasmani + Rohani,60,ONLINE,110-02,11,3,11,11
+100,2026-11-12,Dokter Spesialis Saraf,15,ONLINE,006-29,10,3,11,20
+105,2026-11-10,Dokter Spesialis Penyakit Dalam,30,ONLINE,009-10,10,1,11,13
+107,2026-11-05,Dokter Spesialis Bedah (Eksekutif),44,ONLINE,129-36,10,3,11,33
+109,2026-11-14,Dokter Spesialis Umum,15,ONLINE,123-33,11,5,11,48
+110,2026-11-27,Dokter Spesialis Jantung (Eksekutif),16,OFFLINE,007-10,14,4,11,19
+111,2026-11-20,Dokter Spesialis Orthopaedi & Traumatologi (Eksekutif),19,ONLINE,011-16,12,4,11,44
+112,2026-11-16,Dokter Spesialis Penyakit Dalam,24,OFFLINE,044-20,12,0,11,11
+113,2026-11-18,Hemodialisa,24,ONLINE,027-25,9,2,11,49
+116,2026-11-07,Dokter Spesialis Saraf,25,ONLINE,037-06,12,5,11,44
+117,2026-11-12,Dokter Spesialis Paru,15,OFFLINE,074-04,8,3,11,55
+118,2026-11-12,Dokter Spesialis Saraf,11,OFFLINE,002-15,8,3,11,34
+119,2026-11-24,P. VK (Rajal),39,ONLINE,069-05,8,1,11,51
+120,2026-11-09,Dokter Spesialis Bedah (Eksekutif),44,ONLINE,129-16,8,0,11,25
+122,2026-11-18,Dokter Spesialis THT,55,ONLINE,097-02,10,2,11,28
+123,2026-11-28,Dokter Spesialis Penyakit Jiwa,11,ONLINE,077-06,9,5,11,41
+126,2026-11-23,Dokter Spesialis Umum Tes Kesehatan P3K,60,ONLINE,121-13,10,0,11,49
+128,2026-11-12,Dokter Spesialis Orthopaedi & Traumatologi,19,ONLINE,075-09,10,3,11,10
+129,2026-11-14,Dokter Spesialis Umum,15,OFFLINE,123-08,11,5,11,54
+132,2026-11-04,Dokter Spesialis Penyakit Dalam (Eksekutif),48,ONLINE,033-09,15,2,11,46
+134,2026-11-20,Dokter Spesialis Jantung,44,ONLINE,078-20,8,4,11,53
+136,2026-11-11,Dokter Spesialis Anak,32,ONLINE,116-14,9,2,11,51
+137,2026-11-09,Dokter Spesialis Penyakit Mulut,65,ONLINE,127-18,12,0,11,21
+139,2026-11-06,Uji Kesehatan PNS (Paket),27,ONLINE,082-13,8,4,11,12
+141,2026-11-19,Dokter Spesialis Kandungan (Eksekutif),53,ONLINE,073-10,9,3,11,42
+142,2026-11-23,Dokter Spesialis Saraf (Eksekutif),15,ONLINE,135-09,14,0,11,29
+143,2026-11-20,Dokter Spesialis Penyakit Dalam (Eksekutif),44,ONLINE,046-13,11,4,11,51
+146,2026-11-16,Dokter Spesialis Jantung (Eksekutif),16,ONLINE,007-01,13,0,11,22
+148,2026-11-10,Dokter Spesialis Paru,55,ONLINE,081-12,11,1,11,25
+150,2026-11-27,Dokter Spesialis Paru,55,ONLINE,081-07,9,4,11,30
+154,2026-11-19,Dokter Spesialis Saraf (Eksekutif),15,ONLINE,135-14,9,3,11,10
+155,2026-11-18,Dokter Spesialis THT,45,ONLINE,047-22,9,2,11,50
+156,2026-11-03,Uji Kesehatan PNS (Paket),33,ONLINE,084-05,8,1,11,44
+157,2026-11-05,Dokter Spesialis Jantung,19,OFFLINE,117-10,10,3,11,22
+158,2026-11-18,Dokter Spesialis Anak,26,ONLINE,052-22,10,2,11,29
+160,2026-11-30,LABORATORIUM PATOLOGI KLINIK (SENTRAL),59,OFFLINE,141-07,8,0,11,24
+161,2026-11-09,Dokter Spesialis Anak,20,ONLINE,028-05,10,0,11,47
+163,2026-11-19,Dokter Spesialis Jantung,51,ONLINE,136-14,10,3,11,16
+165,2026-11-04,Dokter Spesialis Anak (Sore),22,ONLINE,112-12,19,2,11,25
+166,2026-11-25,PCR (LAB),59,OFFLINE,108-03,13,2,11,16
+167,2026-11-07,Dokter Spesialis Paru,14,ONLINE,005-36,8,5,11,38
+168,2026-11-24,Dokter Spesialis Kulit & Kelamin,51,ONLINE,137-10,13,1,11,10
+169,2026-11-23,Dokter Spesialis Kandungan (Eksekutif),12,OFFLINE,066-05,10,0,11,20
+171,2026-11-23,Dokter Spesialis Penyakit Dalam,22,ONLINE,057-03,10,0,11,16
+172,2026-11-28,Matahari,56,OFFLINE,076-28,12,5,11,31
+173,2026-11-14,Dokter Spesialis Paru (Eksekutif),14,OFFLINE,024-19,10,5,11,41
+174,2026-11-05,Dokter Spesialis Paru,14,ONLINE,005-12,12,3,11,44
+176,2026-11-27,Dokter Spesialis Penyakit Dalam (Sore),65,ONLINE,091-08,17,4,11,48
+177,2026-11-24,Dokter Spesialis Penyakit Dalam,10,ONLINE,089-15,12,1,11,50
+178,2026-11-09,Dokter Spesialis Gigi Anak,64,OFFLINE,122-11,11,0,11,46
+179,2026-11-11,Dokter Spesialis Penyakit Dalam (Eksekutif),48,ONLINE,033-10,14,2,11,45
+180,2026-11-26,Dokter Spesialis Bedah (Eksekutif),48,OFFLINE,040-08,11,3,11,11
+181,2026-11-16,Dokter Spesialis Bedah (Eksekutif),44,OFFLINE,129-34,9,0,11,23
+182,2026-11-14,Dokter Spesialis Orthopaedi & Traumatologi (Eksekutif),57,OFFLINE,059-04,10,5,11,55
+183,2026-11-19,Uji Kesehatan PNS (Paket),28,ONLINE,105-36,9,3,11,31
+185,2026-11-02,Uji Kesehatan PNS (Paket),40,ONLINE,113-26,10,0,11,55
+186,2026-11-16,Tes P3K Tanpa Surat Sehat,11,ONLINE,049-21,9,0,11,43
+188,2026-11-05,Dokter Spesialis Anak,12,ONLINE,003-06,9,3,11,21
+189,2026-11-14,P. VK (Rajal),39,ONLINE,069-09,10,5,11,50
+192,2026-11-21,Dokter Spesialis Penyakit Jiwa,49,ONLINE,111-09,8,5,11,12
+195,2026-11-10,Dokter Spesialis Periodonti,65,ONLINE,067-08,9,1,11,17
+196,2026-11-09,Dokter Spesialis Penyakit Dalam (Sore),65,ONLINE,091-13,18,0,11,23
+197,2026-11-13,GCU : Surat Sehat Jasmani + Rohani,17,ONLINE,055-09,13,4,11,46
+198,2026-11-30,Dokter Spesialis Jantung,19,ONLINE,117-03,11,0,11,25
+201,2026-12-01,Dokter Spesialis Umum,33,ONLINE,140-14,9,1,12,23
+202,2026-11-19,Dokter Spesialis Umum Tes Kesehatan P3K,17,ONLINE,008-11,13,3,11,41
+203,2026-11-17,Dokter Spesialis Anak (Sore),13,OFFLINE,087-23,17,1,11,22
+204,2026-11-11,Dokter Spesialis Kandungan (Eksekutif),39,ONLINE,098-07,10,2,11,13
+205,2026-11-09,Dokter Spesialis Anak,20,ONLINE,028-08,11,0,11,47
+209,2026-11-06,Dokter Spesialis Umum Tes Kesehatan P3K,60,OFFLINE,121-12,8,4,11,34
+211,2026-11-23,Dokter Spesialis Anak,32,ONLINE,116-04,8,0,11,34
+213,2026-11-04,Dokter Spesialis Rehabilitasi Medik,61,ONLINE,023-14,11,2,11,26
+215,2026-11-04,Dokter Spesialis Penyakit Dalam (Sore),13,ONLINE,063-11,17,2,11,44
+216,2026-11-25,Dokter Spesialis Periodonti,63,ONLINE,083-28,9,2,11,15
+218,2026-11-09,Dokter Spesialis Umum Tes Kesehatan P3K,17,OFFLINE,008-25,11,0,11,17
+219,2026-11-10,Dokter Spesialis Anak (Sore),13,ONLINE,087-16,19,1,11,14
+220,2026-11-16,Tes Dewan,17,ONLINE,068-04,9,0,11,46
+221,2026-11-04,Dokter Spesialis Penyakit Dalam (Sore),65,ONLINE,091-03,17,2,11,19
+222,2026-11-16,RADIOLOGI,46,ONLINE,120-19,19,0,11,14
+223,2026-11-03,Dokter Spesialis Umum,60,ONLINE,124-20,12,1,11,28
+224,2026-11-13,GCU : Surat Sehat Jasmani + Rohani,17,ONLINE,055-15,12,4,11,25
+227,2026-11-06,Dokter Spesialis Umum,21,OFFLINE,014-34,9,4,11,24
+230,2026-11-26,Dokter Spesialis Urologi,51,OFFLINE,036-29,9,3,11,20
+232,2026-11-04,Dokter Spesialis Penyakit Dalam (Eksekutif),44,ONLINE,046-08,9,2,11,15
+233,2026-12-01,Tes Dewan,33,ONLINE,038-18,8,1,12,38
+234,2026-11-02,Dokter Spesialis Bedah (Eksekutif),48,OFFLINE,040-14,8,0,11,22
+235,2026-12-01,Tes Dewan,33,ONLINE,038-21,7,1,12,22
+236,2026-11-03,Dokter Spesialis Rehabilitasi Medik,24,ONLINE,118-16,9,1,11,35
+237,2026-11-09,Dokter Spesialis Orthopaedi & Traumatologi,24,OFFLINE,102-02,9,0,11,19
+238,2026-11-04,Tes Dewan,45,ONLINE,085-27,8,2,11,18
+240,2026-11-10,Dokter Spesialis Jantung,16,ONLINE,093-17,8,1,11,40
+242,2026-11-09,Dokter Spesialis Anak,20,ONLINE,028-01,13,0,11,47
+243,2026-11-19,Dokter Spesialis Mata,56,ONLINE,126-02,10,3,11,12
+244,2026-11-03,Dokter Spesialis Periodonti,65,OFFLINE,067-11,8,1,11,18
+245,2026-11-27,PCR (LAB),59,ONLINE,108-12,8,4,11,14
+248,2026-12-02,Dokter Spesialis Gigi & Mulut,36,ONLINE,088-11,11,2,12,48
+249,2026-11-10,Dokter Spesialis Penyakit Dalam (Eksekutif),13,OFFLINE,022-29,10,1,11,50
+250,2026-11-24,Dokter Spesialis Dalam Sub. Gastroenterohepatologi,47,ONLINE,042-01,7,1,11,16
+251,2026-11-16,Dokter Spesialis Kulit & Kelamin,49,ONLINE,018-27,10,0,11,16
+252,2026-11-27,Dokter Spesialis Umum,45,ONLINE,095-17,8,4,11,30
+253,2026-11-25,Dokter Spesialis Saraf,10,ONLINE,026-10,8,2,11,31
+254,2026-11-03,GCU : Surat Sehat Jasmani + Rohani,60,OFFLINE,110-07,8,1,11,22
+256,2026-11-18,Tes Dewan,60,ONLINE,034-06,7,2,11,23
+257,2026-11-17,Dokter Spesialis Penyakit Dalam (Eksekutif),13,ONLINE,022-06,10,1,11,34
+258,2026-11-16,Uji Kesehatan PNS (Paket),42,ONLINE,062-10,10,0,11,27
+260,2026-11-19,Dokter Spesialis Kulit & Kelamin,55,ONLINE,053-05,12,3,11,40
+262,2026-11-27,Dokter Spesialis Bedah,44,ONLINE,039-03,8,4,11,37
+263,2026-11-13,Dokter Spesialis Orthopaedi & Traumatologi,24,OFFLINE,102-13,8,4,11,45
+264,2026-11-19,Dokter Spesialis Urologi,50,ONLINE,060-10,11,3,11,19
+265,2026-11-16,Tes P3K Tanpa Surat Sehat,11,ONLINE,049-32,11,0,11,51
+267,2026-11-10,Dokter Spesialis Saraf,10,OFFLINE,026-14,11,1,11,31
+268,2026-11-30,Dokter Spesialis Jantung (Eksekutif),52,OFFLINE,056-13,9,0,11,38
+269,2026-11-09,Dokter Spesialis Paru (Eksekutif),62,ONLINE,016-17,9,0,11,41
+270,2026-11-17,Uji Kesehatan PNS (Paket),33,ONLINE,084-03,9,1,11,11
+272,2026-11-24,Dokter Spesialis Jantung,35,ONLINE,086-20,8,1,11,41
+275,2026-11-19,Dokter Spesialis Kandungan,18,ONLINE,010-13,11,3,11,48
+276,2026-11-18,Dokter Spesialis Anak (Sore),22,OFFLINE,112-04,17,2,11,26
+277,2026-11-18,Dokter Spesialis Orthopaedi & Traumatologi (Eksekutif),57,ONLINE,059-10,13,2,11,48
+278,2026-11-30,Dokter Spesialis Umum,17,ONLINE,099-10,10,0,11,22
+280,2026-11-21,Dokter Spesialis Umum,15,OFFLINE,123-15,11,5,11,31
+282,2026-11-09,Dokter Spesialis Bedah (Eksekutif),48,OFFLINE,040-13,10,0,11,36
+283,2026-11-04,Dokter Spesialis Jantung,48,ONLINE,103-03,11,2,11,49
+286,2026-11-04,P. VK (Rajal),18,ONLINE,021-19,11,2,11,20
+288,2026-11-02,Dokter Spesialis Paru,62,ONLINE,115-01,10,0,11,11
+289,2026-11-16,Dokter Spesialis Urologi,51,OFFLINE,036-05,13,0,11,20
+291,2026-11-27,Dokter Spesialis Gigi & Mulut,21,ONLINE,133-12,11,4,11,24
+294,2026-11-05,Dokter Spesialis Dalam Sub. Gastroenterohepatologi,47,ONLINE,042-10,12,3,11,54
+296,2026-11-17,Dokter Spesialis Anak (Sore),20,OFFLINE,020-17,16,1,11,26
+297,2026-11-19,Dokter Spesialis Fisioterapi,61,ONLINE,143-04,13,3,11,31
+298,2026-11-23,Dokter Spesialis Orthopaedi & Traumatologi,19,OFFLINE,075-03,10,0,11,42
+299,2026-11-17,Dokter Spesialis Jantung,35,OFFLINE,086-10,8,1,11,12
+301,2026-11-13,Dokter Spesialis Penyakit Dalam,10,ONLINE,089-07,12,4,11,17
+302,2026-11-24,Dokter Spesialis VCT,33,ONLINE,109-12,9,1,11,54
+304,2026-11-17,Dokter Spesialis Penyakit Dalam (Eksekutif),24,OFFLINE,012-01,14,1,11,38
+308,2026-11-10,Dokter Spesialis Jantung,16,ONLINE,093-21,8,1,11,45
+309,2026-11-27,Uji Kesehatan PNS (Paket),45,ONLINE,070-06,12,4,11,38
+310,2026-11-04,Matahari,56,ONLINE,076-39,10,2,11,15
+311,2026-11-12,Dokter Spesialis Anak,18,OFFLINE,043-11,9,3,11,39
+312,2026-11-02,Dokter Spesialis Urologi,51,ONLINE,036-36,12,0,11,28
+313,2026-11-05,Tes P3K Tanpa Surat Sehat,11,ONLINE,049-08,9,3,11,22
+314,2026-11-26,Dokter Spesialis Penyakit Dalam,56,ONLINE,072-19,11,3,11,53
+315,2026-11-27,Dokter Spesialis Umum Tes Kesehatan P3K,45,ONLINE,058-16,8,4,11,47
+316,2026-11-23,Dokter Spesialis Umum,21,OFFLINE,014-39,10,0,11,36
+317,2026-11-06,Dokter Spesialis VCT,24,ONLINE,130-27,11,4,11,29
+319,2026-11-19,Dokter Spesialis Umum,58,ONLINE,096-27,11,3,11,52
+320,2026-11-14,Tes Dewan,45,OFFLINE,085-18,8,5,11,22
+321,2026-11-09,Dokter Spesialis Saraf,30,ONLINE,064-27,11,0,11,32
+322,2026-11-14,Dokter Spesialis Kulit & Kelamin (Eksekutif),49,ONLINE,029-22,13,5,11,54
+323,2026-11-19,Uji Kesehatan PNS (Paket),41,ONLINE,092-20,8,3,11,22
+324,2026-11-27,Dokter Spesialis Anak (Eksekutif),12,ONLINE,015-03,11,4,11,21
+325,2026-11-12,Uji Kesehatan PNS (Paket),28,ONLINE,105-38,12,3,11,20
+326,2026-11-09,Dokter Spesialis Kandungan,39,ONLINE,080-40,9,0,11,50
+327,2026-11-20,Dokter Spesialis Umum,33,ONLINE,140-17,11,4,11,14
+328,2026-11-09,Dokter Spesialis VCT,24,ONLINE,130-07,10,0,11,28
+331,2026-11-18,Dokter Spesialis Penyakit Jiwa,49,ONLINE,111-17,8,2,11,30
+332,2026-11-23,Dokter Spesialis Jantung,51,ONLINE,136-07,10,0,11,16
+333,2026-11-05,Dokter Spesialis Gigi & Mulut,65,ONLINE,132-13,8,3,11,21
+336,2026-11-12,Dokter Spesialis Penyakit Dalam,30,ONLINE,009-10,11,3,11,15
+338,2026-11-07,Dokter Spesialis Penyakit Dalam,13,ONLINE,004-20,7,5,11,46
+341,2026-11-10,Dokter Spesialis Penyakit Dalam,13,ONLINE,004-11,8,1,11,41
+343,2026-11-21,Dokter Spesialis Urologi,50,OFFLINE,060-11,12,5,11,37
+344,2026-11-11,Dokter Spesialis Jantung (Eksekutif),52,OFFLINE,056-08,10,2,11,40
+345,2026-11-09,Dokter Spesialis Penyakit Dalam,56,ONLINE,072-07,8,0,11,44
+346,2026-11-23,Dokter Spesialis Penyakit Dalam,37,ONLINE,106-13,9,0,11,35
+347,2026-11-24,Dokter Spesialis Jantung,52,ONLINE,032-08,12,1,11,35
+348,2026-11-03,P. VK (Rajal),39,ONLINE,069-03,11,1,11,53
+349,2026-11-25,Dokter Spesialis Umum,45,ONLINE,095-32,12,2,11,24
