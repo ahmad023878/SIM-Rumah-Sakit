@@ -3,6 +3,8 @@ session();
 include('include/config.php');
 
 hms_require_role('admin', 'logout.php');
+require_once __DIR__ . '/modules/module_bootstrap.php';
+hms_module_bootstrap($con);
 
 $adminId = (int) $_SESSION['id'];
 $statusExpr = hms_appointment_status_expr($con, 'a');
@@ -19,6 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         array($appointmentId)
     );
 
+    $linkedVisit = hms_fetch_one($con, 'SELECT id,status,arrived_at FROM hms_patient_visits WHERE appointment_id=? LIMIT 1', 'i', array($appointmentId));
+    if ($appointment && $status === 'Completed' && $linkedVisit && $linkedVisit['status'] !== 'SELESAI') {
+        hms_flash('error', 'Janji temu hanya dapat ditandai selesai setelah pemeriksaan dan SOAP/RME diselesaikan melalui menu Rawat Jalan.');
+        hms_redirect('appointment-history.php');
+    }
+    if ($appointment && $status === 'Cancelled' && $linkedVisit && ($linkedVisit['status'] !== 'MENUNGGU' || !empty($linkedVisit['arrived_at']))) {
+        hms_flash('error', 'Janji temu tidak dapat dibatalkan karena proses pelayanan sudah dimulai.');
+        hms_redirect('appointment-history.php');
+    }
     if ($appointment && hms_set_appointment_status($con, $appointmentId, $status, 'admin', $adminId)) {
         hms_notify($con, 'patient', (int) $appointment['userId'], 'Janji Temu status updated', 'Your appointment is now ' . $status . '.');
         hms_notify($con, 'doctor', (int) $appointment['doctorId'], 'Janji Temu status updated', 'Janji Temu #' . $appointmentId . ' is now ' . $status . '.');
