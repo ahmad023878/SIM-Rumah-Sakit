@@ -19,7 +19,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
    if($doctorId<=0) $doctorId=(int)($visit['doctor_id']??0);
    if($role==='doctor' && (int)$visit['doctor_id']>0 && (int)$visit['doctor_id']!==$doctorId) throw new RuntimeException('Kunjungan ini bukan tanggung jawab dokter yang sedang login.');
    if($visit['status']==='DIPANGGIL'){
-     hms_execute($con,"UPDATE hms_patient_visits SET status='DILAYANI',served_at=COALESCE(served_at,NOW()),updated_at=NOW() WHERE id=? AND status='DIPANGGIL'",'i',array($visitId));
+     hms_execute($con,"UPDATE hms_patient_visits SET status='DILAYANI',served_at=COALESCE(served_at,NOW()),updated_at=NOW() WHERE id=? AND status='DIPANGGIL' AND served_at IS NULL",'i',array($visitId));
    }
    $encounterId=hms_workflow_ensure_outpatient_encounter($con,$visitId,$doctorId);
    hms_set_flash('success','Pelayanan rawat jalan siap. Silakan isi SOAP/RME untuk pasien ini.');
@@ -87,7 +87,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
    $role=hms_module_current_role();
    if($role==='doctor' && (int)$e['doctor_id']>0 && (int)$e['doctor_id']!==(int)($_SESSION['id']??0)) throw new RuntimeException('Hanya dokter penanggung jawab yang dapat menyelesaikan pemeriksaan.');
    hms_execute($con,"UPDATE hms_outpatient_encounters SET status='SELESAI',completed_at=COALESCE(completed_at,NOW()),updated_at=NOW() WHERE id=?",'i',array($id));
-   hms_execute($con,"UPDATE hms_patient_visits SET status='SELESAI',completed_at=COALESCE(completed_at,NOW()),updated_at=NOW() WHERE id=? AND status='DILAYANI'",'i',array((int)$e['visit_id']));
+   hms_execute($con,"UPDATE hms_patient_visits SET status='SELESAI',completed_at=COALESCE(completed_at,NOW()),updated_at=NOW() WHERE id=? AND status='DILAYANI' AND served_at IS NOT NULL AND completed_at IS NULL",'i',array((int)$e['visit_id']));
    if(!empty($e['appointment_id']) && function_exists('hms_set_appointment_status')){
      hms_set_appointment_status($con,(int)$e['appointment_id'],'Completed',$role==='doctor'?'doctor':'admin',(int)($_SESSION['id']??0));
    }

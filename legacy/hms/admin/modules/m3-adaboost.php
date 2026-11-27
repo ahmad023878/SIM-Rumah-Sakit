@@ -132,7 +132,7 @@ hms_layout_header('M3 AdaBoost Regression','admin','operations');
 <!-- <div class="alert alert-info">
  <strong>Target penelitian:</strong> service duration = <code>completed_at − served_at</code>, dalam menit.
  Audit bersifat baca-saja. Data sumber SIMRS tidak diubah atau dihapus.
-</div> -->
+</div>-->
 
 <div class="hms-card p-3 mb-3">
  <form method="get" class="row g-2 align-items-end">
