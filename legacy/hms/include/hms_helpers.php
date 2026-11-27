@@ -1027,7 +1027,7 @@ if (!defined('HMS_HELPERS_LOADED')) {
 
         setcookie(hms_auth_cookie_name(), $value, array(
             'expires'  => $issued + 7200,
-            'path'     => hms_auth_cookie_path(),
+            'path'     => '/',
             'secure'   => false,
             'httponly' => true,
             'samesite' => 'Lax',
@@ -1134,12 +1134,187 @@ if (!defined('HMS_HELPERS_LOADED')) {
     {
         setcookie(hms_auth_cookie_name(), '', array(
             'expires'  => time() - 3600,
-            'path'     => hms_auth_cookie_path(),
+            'path'     => '/',
             'secure'   => false,
             'httponly' => true,
             'samesite' => 'Lax',
         ));
         unset($_COOKIE[hms_auth_cookie_name()]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Patient authentication bridge (signed, database-verified cookie).
+    // This is a fallback when the CI4/native session is lost during a legacy
+    // page transition. It does not replace password authentication.
+    // -------------------------------------------------------------------------
+    function hms_patient_auth_cookie_name()
+    {
+        return 'hms_patient_auth';
+    }
+
+    function hms_set_patient_auth_cookie($id, $username)
+    {
+        $issued = time();
+        $payload = (int) $id . '|' . (string) $username . '|' . $issued;
+        $signature = hash_hmac('sha256', $payload, hms_auth_secret());
+        $value = rtrim(strtr(base64_encode($payload . '|' . $signature), '+/', '-_'), '=');
+        setcookie(hms_patient_auth_cookie_name(), $value, array(
+            'expires' => $issued + 7200,
+            'path' => '/',
+            'secure' => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+        $_COOKIE[hms_patient_auth_cookie_name()] = $value;
+    }
+
+    function hms_get_patient_auth_cookie()
+    {
+        $name = hms_patient_auth_cookie_name();
+        if (empty($_COOKIE[$name])) return null;
+        $encoded = strtr((string) $_COOKIE[$name], '-_', '+/');
+        $padding = strlen($encoded) % 4;
+        if ($padding) $encoded .= str_repeat('=', 4 - $padding);
+        $decoded = base64_decode($encoded, true);
+        if ($decoded === false) return null;
+        $parts = explode('|', $decoded);
+        if (count($parts) !== 4) return null;
+        list($id, $username, $issued, $signature) = $parts;
+        if (!ctype_digit((string) $id) || !ctype_digit((string) $issued)) return null;
+        $issued = (int) $issued;
+        if ($issued <= 0 || (time() - $issued) > 7200 || $issued > (time() + 60)) return null;
+        $payload = $id . '|' . $username . '|' . $issued;
+        $expected = hash_hmac('sha256', $payload, hms_auth_secret());
+        if (!hash_equals($expected, $signature)) return null;
+        return array('id' => (int) $id, 'username' => $username);
+    }
+
+    function hms_clear_patient_auth_cookie()
+    {
+        setcookie(hms_patient_auth_cookie_name(), '', array(
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+        unset($_COOKIE[hms_patient_auth_cookie_name()]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Doctor authentication bridge
+    // -------------------------------------------------------------------------
+    // The legacy doctor pages can be requested directly as PHP files. A signed
+    // cookie keeps the doctor authentication available even if the CI4 session
+    // ID changes during a redirect.
+    function hms_doctor_auth_cookie_name()
+    {
+        return 'hms_doctor_auth';
+    }
+
+    function hms_set_doctor_auth_cookie($id, $username)
+    {
+        $issued = time();
+        $payload = (int) $id . '|' . (string) $username . '|' . $issued;
+        $signature = hash_hmac('sha256', $payload, hms_auth_secret());
+        $value = rtrim(strtr(base64_encode($payload . '|' . $signature), '+/', '-_'), '=');
+
+        setcookie(hms_doctor_auth_cookie_name(), $value, array(
+            'expires'  => $issued + 7200,
+            'path'     => '/',
+            'secure'   => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+        $_COOKIE[hms_doctor_auth_cookie_name()] = $value;
+    }
+
+    function hms_get_doctor_auth_cookie()
+    {
+        $name = hms_doctor_auth_cookie_name();
+        if (empty($_COOKIE[$name])) {
+            return null;
+        }
+
+        $encoded = strtr((string) $_COOKIE[$name], '-_', '+/');
+        $padding = strlen($encoded) % 4;
+        if ($padding) {
+            $encoded .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($encoded, true);
+        if ($decoded === false) {
+            return null;
+        }
+
+        $parts = explode('|', $decoded);
+        if (count($parts) !== 4) {
+            return null;
+        }
+
+        list($id, $username, $issued, $signature) = $parts;
+        if (!ctype_digit((string) $id) || !ctype_digit((string) $issued)) {
+            return null;
+        }
+
+        $issued = (int) $issued;
+        if ($issued <= 0 || (time() - $issued) > 7200 || $issued > (time() + 60)) {
+            return null;
+        }
+
+        $payload = $id . '|' . $username . '|' . $issued;
+        $expected = hash_hmac('sha256', $payload, hms_auth_secret());
+        if (!hash_equals($expected, $signature)) {
+            return null;
+        }
+
+        return array('id' => (int) $id, 'username' => $username);
+    }
+
+    function hms_clear_doctor_auth_cookie()
+    {
+        setcookie(hms_doctor_auth_cookie_name(), '', array(
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => false,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ));
+        unset($_COOKIE[hms_doctor_auth_cookie_name()]);
+    }
+
+    // Short-lived URL handoff used when legacy PHP pages do not reliably
+    // share the CI4 session/cookie state. The token contains no password.
+    function hms_make_doctor_ticket($id, $username)
+    {
+        $issued = time();
+        $payload = (int) $id . '|' . (string) $username . '|' . $issued;
+        $signature = hash_hmac('sha256', $payload, hms_auth_secret());
+        return rtrim(strtr(base64_encode($payload . '|' . $signature), '+/', '-_'), '=');
+    }
+
+    function hms_get_doctor_ticket()
+    {
+        if (empty($_GET['doctor_auth'])) {
+            return null;
+        }
+        $encoded = strtr((string) $_GET['doctor_auth'], '-_', '+/');
+        $padding = strlen($encoded) % 4;
+        if ($padding) {
+            $encoded .= str_repeat('=', 4 - $padding);
+        }
+        $decoded = base64_decode($encoded, true);
+        if ($decoded === false) return null;
+        $parts = explode('|', $decoded);
+        if (count($parts) !== 4) return null;
+        list($id, $username, $issued, $signature) = $parts;
+        if (!ctype_digit((string)$id) || !ctype_digit((string)$issued)) return null;
+        $issued = (int)$issued;
+        if ($issued <= 0 || (time() - $issued) > 300 || $issued > (time() + 30)) return null;
+        $payload = $id . '|' . $username . '|' . $issued;
+        $expected = hash_hmac('sha256', $payload, hms_auth_secret());
+        if (!hash_equals($expected, $signature)) return null;
+        return array('id' => (int)$id, 'username' => $username);
     }
 
 function hms_redirect($location)
@@ -1166,14 +1341,130 @@ function hms_redirect($location)
 
 function hms_require_role($role, $redirect = 'logout.php')
 {
+    // Ensure the legacy database connection is always available to this
+    // function, even when the page is included through the CI4 controller.
+    if (!isset($GLOBALS['con']) || !($GLOBALS['con'] instanceof mysqli)) {
+        $hmsConfig = __DIR__ . '/config.php';
+        if (is_file($hmsConfig)) {
+            require_once $hmsConfig;
+        }
+    }
     $session = session();
 
-    $sessionId    = $session->get('id');
-    $sessionRole  = $session->get('role');
-    $sessionLogin = $session->get('login');
+    // Legacy pages and CI4 now share one session. For authentication checks,
+    // prefer the current native PHP session values when they are present.
+    // This prevents a stale CI4 role (for example, "patient") from overriding
+    // a freshly authenticated doctor/admin session after login.
+    $legacyId    = isset($_SESSION['id']) ? (int) $_SESSION['id'] : 0;
+    $legacyRole  = isset($_SESSION['role']) ? (string) $_SESSION['role'] : '';
+    $legacyLogin = isset($_SESSION['login']) ? (string) $_SESSION['login'] : '';
+
+    $sessionId    = $legacyId ?: $session->get('id');
+    $sessionRole  = $legacyRole !== '' ? $legacyRole : (string) $session->get('role');
+    $sessionLogin = $legacyLogin !== '' ? $legacyLogin : (string) $session->get('login');
+
+    // Keep the CI4 session synchronized with the values used by legacy pages.
+    if (!empty($sessionId) && (int) $session->get('id') !== (int) $sessionId) {
+        $session->set('id', (int) $sessionId);
+    }
+    if ($sessionRole !== '' && $session->get('role') !== $sessionRole) {
+        $session->set('role', $sessionRole);
+    }
+    if ($sessionLogin !== '' && $session->get('login') !== $sessionLogin) {
+        $session->set('login', $sessionLogin);
+    }
 
     if (!empty($sessionId) && $sessionRole === $role) {
         return true;
+    }
+
+    // Patient fallback: restore session only after validating the signed cookie
+    // against the current users table. This prevents a stale cookie from granting
+    // access to a deleted/renamed account.
+    if ($role === 'patient' && function_exists('hms_get_patient_auth_cookie')) {
+        $auth = hms_get_patient_auth_cookie();
+        if ($auth !== null && isset($GLOBALS['con']) && $GLOBALS['con'] instanceof mysqli) {
+            $check = mysqli_prepare($GLOBALS['con'], 'SELECT id, email FROM users WHERE id = ? AND email = ? LIMIT 1');
+            $validPatient = false;
+            if ($check) {
+                $checkId = (int) $auth['id'];
+                $checkEmail = (string) $auth['username'];
+                mysqli_stmt_bind_param($check, 'is', $checkId, $checkEmail);
+                mysqli_stmt_execute($check);
+                mysqli_stmt_store_result($check);
+                $validPatient = mysqli_stmt_num_rows($check) === 1;
+                mysqli_stmt_close($check);
+            }
+            if ($validPatient) {
+                $session->set(['login' => $auth['username'], 'id' => $auth['id'], 'role' => 'patient']);
+                $_SESSION['login'] = $auth['username'];
+                $_SESSION['id'] = $auth['id'];
+                $_SESSION['role'] = 'patient';
+                return true;
+            }
+            hms_clear_patient_auth_cookie();
+        }
+    }
+
+    // Doctor authentication bridge. A short-lived signed URL handoff is checked
+    // first because direct legacy PHP pages may not share CI4 session state.
+    if ($role === 'doctor' && function_exists('hms_get_doctor_ticket')) {
+        $ticket = hms_get_doctor_ticket();
+        if ($ticket !== null) {
+            $validDoctor = false;
+            $check = mysqli_prepare($GLOBALS['con'], 'SELECT id, docEmail FROM doctors WHERE id = ? AND docEmail = ? LIMIT 1');
+            if ($check) {
+                $checkId = (int)$ticket['id'];
+                $checkEmail = (string)$ticket['username'];
+                mysqli_stmt_bind_param($check, 'is', $checkId, $checkEmail);
+                mysqli_stmt_execute($check);
+                mysqli_stmt_store_result($check);
+                $validDoctor = (mysqli_stmt_num_rows($check) === 1);
+                mysqli_stmt_close($check);
+            }
+            if ($validDoctor) {
+                $session->set(array('login'=>$ticket['username'], 'id'=>$ticket['id'], 'role'=>'doctor'));
+                $_SESSION['login'] = $ticket['username'];
+                $_SESSION['id'] = $ticket['id'];
+                $_SESSION['role'] = 'doctor';
+                hms_set_doctor_auth_cookie($ticket['id'], $ticket['username']);
+                return true;
+            }
+        }
+    }
+
+    // Doctor authentication bridge. Check the signed doctor cookie next.
+    if ($role === 'doctor' && function_exists('hms_get_doctor_auth_cookie')) {
+        $auth = hms_get_doctor_auth_cookie();
+        if ($auth !== null) {
+            $validDoctor = true;
+            if (isset($GLOBALS['con']) && $GLOBALS['con'] instanceof mysqli) {
+                $check = mysqli_prepare($GLOBALS['con'], 'SELECT id, docEmail FROM doctors WHERE id = ? AND docEmail = ? LIMIT 1');
+                if ($check) {
+                    $checkId = (int) $auth['id'];
+                    $checkEmail = (string) $auth['username'];
+                    mysqli_stmt_bind_param($check, 'is', $checkId, $checkEmail);
+                    mysqli_stmt_execute($check);
+                    mysqli_stmt_store_result($check);
+                    $validDoctor = (mysqli_stmt_num_rows($check) === 1);
+                    mysqli_stmt_close($check);
+                } else {
+                    $validDoctor = false;
+                }
+            }
+
+            if ($validDoctor) {
+                $session->set([
+                    'login' => $auth['username'],
+                    'id'    => $auth['id'],
+                    'role'  => 'doctor',
+                ]);
+                $_SESSION['login'] = $auth['username'];
+                $_SESSION['id'] = $auth['id'];
+                $_SESSION['role'] = 'doctor';
+                return true;
+            }
+        }
     }
 
     if ($role === 'admin' && function_exists('hms_get_admin_ticket')) {
@@ -1292,13 +1583,190 @@ function hms_flash($type, $message)
         return $flash;
     }
 
-    function hms_csrf_token()
+
+    // -------------------------------------------------------------------------
+    // Login CAPTCHA: visual server-side code challenge.
+    // Each portal has its own challenge. No database/schema changes.
+    // -------------------------------------------------------------------------
+    function hms_captcha_generate($scope = 'login')
     {
         session();
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+        $scope = preg_replace('/[^a-z0-9_-]/i', '', (string) $scope);
+        if ($scope === '') {
+            $scope = 'login';
         }
-        return $_SESSION['csrf_token'];
+
+        // Avoid characters that are easy to confuse (0/O and 1/I).
+        $alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $code = '';
+        $max = strlen($alphabet) - 1;
+        for ($i = 0; $i < 5; $i++) {
+            $code .= $alphabet[random_int(0, $max)];
+        }
+
+        $_SESSION['hms_captcha_' . $scope] = array(
+            'question' => $code,
+            'answer'   => $code,
+            'created'  => time(),
+        );
+
+        return $code;
+    }
+
+    function hms_captcha_question($scope = 'login')
+    {
+        session();
+
+        $scope = preg_replace('/[^a-z0-9_-]/i', '', (string) $scope);
+        if ($scope === '') {
+            $scope = 'login';
+        }
+
+        $key = 'hms_captcha_' . $scope;
+        if (
+            empty($_SESSION[$key]) ||
+            !isset($_SESSION[$key]['question'], $_SESSION[$key]['answer'], $_SESSION[$key]['created']) ||
+            (time() - (int) $_SESSION[$key]['created']) > 600
+        ) {
+            return hms_captcha_generate($scope);
+        }
+
+        return (string) $_SESSION[$key]['question'];
+    }
+
+    /**
+     * Force a new CAPTCHA code, used by the refresh icon on login pages.
+     */
+    function hms_captcha_refresh($scope = 'login')
+    {
+        return hms_captcha_generate($scope);
+    }
+
+    /**
+     * Render a CAPTCHA image-like SVG without requiring GD, external services,
+     * or an API key. The answer remains server-side in the session.
+     */
+    function hms_captcha_image($scope = 'login')
+    {
+        $code = hms_captcha_question($scope);
+        $safeCode = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
+
+        $noise = '';
+        for ($i = 0; $i < 22; $i++) {
+            $x = random_int(5, 295);
+            $y = random_int(8, 52);
+            $r = random_int(1, 3);
+            $opacity = number_format(random_int(20, 55) / 100, 2, '.', '');
+            $noise .= '<circle cx="' . $x . '" cy="' . $y . '" r="' . $r . '" fill="#7a7a7a" opacity="' . $opacity . '" />';
+        }
+
+        $lines = '';
+        for ($i = 0; $i < 4; $i++) {
+            $x1 = random_int(0, 60);
+            $y1 = random_int(8, 54);
+            $x2 = random_int(235, 315);
+            $y2 = random_int(8, 54);
+            $color = $i % 2 === 0 ? '#222222' : '#777777';
+            $lines .= '<line x1="' . $x1 . '" y1="' . $y1 . '" x2="' . $x2 . '" y2="' . $y2 . '" stroke="' . $color . '" stroke-width="' . random_int(1, 3) . '" opacity="0.62" />';
+        }
+
+        $chars = preg_split('//u', $code, -1, PREG_SPLIT_NO_EMPTY);
+        $text = '';
+        foreach ($chars as $i => $char) {
+            $x = 28 + ($i * 51) + random_int(-3, 3);
+            $y = 39 + random_int(-5, 5);
+            $rotate = random_int(-18, 18);
+            $text .= '<text x="' . $x . '" y="' . $y . '" transform="rotate(' . $rotate . ' ' . $x . ' ' . $y . ')" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#1f1f1f">' . htmlspecialchars($char, ENT_QUOTES, 'UTF-8') . '</text>';
+        }
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="315" height="60" viewBox="0 0 315 60" role="img" aria-label="Kode CAPTCHA">'
+             . '<rect width="315" height="60" rx="5" fill="#e9e9e9" />'
+             . $noise
+             . $lines
+             . $text
+             . '</svg>';
+
+        return '<div class="hms-captcha-image" style="width:315px;max-width:100%;height:60px;border:1px solid #d5d5d5;border-radius:5px;overflow:hidden;background:#e9e9e9;">'
+             . $svg
+             . '</div>';
+    }
+
+    function hms_captcha_field($scope = 'login')
+    {
+        return '<input type="text" class="form-control" name="captcha" id="captcha" inputmode="text" autocomplete="off" maxlength="5" autocapitalize="characters" spellcheck="false" required>';
+    }
+
+    function hms_captcha_refresh_button($scope = 'login')
+    {
+        $scope = preg_replace('/[^a-z0-9_-]/i', '', (string) $scope);
+        if ($scope === '') {
+            $scope = 'login';
+        }
+        $url = isset($_SERVER['PHP_SELF']) ? (string) $_SERVER['PHP_SELF'] : '';
+        $separator = (strpos($url, '?') === false) ? '?' : '&';
+        $refreshUrl = $url . $separator . 'captcha_refresh=1';
+        return '<a href="' . htmlspecialchars($refreshUrl, ENT_QUOTES, 'UTF-8') . '" class="btn btn-outline-secondary ms-2" title="Muat ulang CAPTCHA" aria-label="Muat ulang CAPTCHA" style="height:60px;min-width:54px;display:inline-flex;align-items:center;justify-content:center;">'
+             . '<span style="font-size:28px;line-height:1;color:#f57c00;">↻</span>'
+             . '</a>';
+    }
+
+    function hms_verify_captcha($scope = 'login', $value = null)
+    {
+        session();
+
+        $scope = preg_replace('/[^a-z0-9_-]/i', '', (string) $scope);
+        if ($scope === '') {
+            $scope = 'login';
+        }
+
+        $key = 'hms_captcha_' . $scope;
+        $captcha = isset($_SESSION[$key]) && is_array($_SESSION[$key])
+            ? $_SESSION[$key]
+            : array();
+
+        $answer = strtoupper(trim((string) ($value !== null ? $value : (isset($_POST['captcha']) ? $_POST['captcha'] : ''))));
+        $expected = strtoupper((string) (isset($captcha['answer']) ? $captcha['answer'] : ''));
+
+        $valid = $expected !== ''
+            && !empty($captcha['created'])
+            && (time() - (int) $captcha['created']) <= 600
+            && hash_equals($expected, $answer);
+
+        // One-time challenge: always discard it after verification.
+        unset($_SESSION[$key]);
+
+        if (!$valid) {
+            http_response_code(422);
+            hms_flash('danger', 'Kode CAPTCHA salah atau sudah kedaluwarsa. Silakan coba lagi.');
+            return false;
+        }
+
+        return true;
+    }
+
+    function hms_csrf_token()
+    {
+        // Keep the token synchronized between the native PHP session used by
+        // legacy pages and the CodeIgniter session used by the application.
+        $ciSession = session();
+        $nativeToken = isset($_SESSION['csrf_token']) ? (string) $_SESSION['csrf_token'] : '';
+        $ciToken = '';
+        if (is_object($ciSession) && method_exists($ciSession, 'get')) {
+            $ciToken = (string) ($ciSession->get('csrf_token') ?? '');
+        }
+
+        // Reuse an existing session-bound token; do not rotate it on every page render.
+        $token = $ciToken !== '' ? $ciToken : $nativeToken;
+        if ($token === '') {
+            $token = bin2hex(random_bytes(32));
+        }
+
+        $_SESSION['csrf_token'] = $token;
+        if (is_object($ciSession) && method_exists($ciSession, 'set')) {
+            $ciSession->set('csrf_token', $token);
+        }
+        return $token;
     }
 
     function hms_csrf_field()
@@ -1308,50 +1776,160 @@ function hms_flash($type, $message)
 
     function hms_verify_csrf()
     {
-        session();
-        $token = isset($_POST['csrf_token']) ? (string) $_POST['csrf_token'] : '';
-        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
+        $ciSession = session();
+        $postedToken = isset($_POST['csrf_token']) ? (string) $_POST['csrf_token'] : '';
+        $nativeToken = isset($_SESSION['csrf_token']) ? (string) $_SESSION['csrf_token'] : '';
+        $ciToken = '';
+        if (is_object($ciSession) && method_exists($ciSession, 'get')) {
+            $ciToken = (string) ($ciSession->get('csrf_token') ?? '');
+        }
+
+        // Accept only a token that matches a value stored in this same user's
+        // active session. This supports legacy/CI4 session synchronization
+        // without disabling CSRF validation.
+        $valid = $postedToken !== '' && (
+            ($nativeToken !== '' && hash_equals($nativeToken, $postedToken)) ||
+            ($ciToken !== '' && hash_equals($ciToken, $postedToken))
+        );
+        if (!$valid) {
             http_response_code(419);
-            die('Invalid request token.');
+            die('Invalid request token. Muat ulang halaman, lalu coba kembali.');
+        }
+
+        // Heal a stale mirror so the next form render uses the same token.
+        $canonical = $ciToken !== '' ? $ciToken : $nativeToken;
+        if ($canonical !== '') {
+            $_SESSION['csrf_token'] = $canonical;
+            if (is_object($ciSession) && method_exists($ciSession, 'set')) {
+                $ciSession->set('csrf_token', $canonical);
+            }
         }
     }
+	
+	function hms_get_mysql_connection($con = null)
+	{
+		// Jika sudah diberikan koneksi mysqli, gunakan langsung.
+		if ($con instanceof mysqli) {
+			return $con;
+		}
+
+		// Ambil koneksi dari CodeIgniter 4.
+		try {
+			$db = \Config\Database::connect();
+
+			if (!$db) {
+				throw new RuntimeException(
+					'CodeIgniter gagal membuat koneksi database.'
+				);
+			}
+
+			// Pastikan koneksi sudah aktif.
+			$db->initialize();
+
+			// Ambil koneksi native mysqli.
+			$mysqli = $db->connID;
+
+			if ($mysqli instanceof mysqli) {
+				return $mysqli;
+			}
+
+		} catch (\Throwable $e) {
+			throw new RuntimeException(
+				'Koneksi database CodeIgniter gagal: ' . $e->getMessage()
+			);
+		}
+
+		throw new RuntimeException(
+			'Koneksi database MySQL tidak tersedia.'
+		);
+	}
 
     function hms_stmt($con, $sql, $types = '', $params = array())
-    {
-        $stmt = mysqli_prepare($con, $sql);
-        if (!$stmt) {
-            throw new RuntimeException('Database statement failed.');
-        }
+	{
+		// Normalisasi koneksi legacy → CodeIgniter 4 mysqli
+		$con = hms_get_mysql_connection($con);
 
-        if ($types !== '' && !empty($params)) {
-            $bind = array_merge(array($types), $params);
-            $refs = array();
-            foreach ($bind as $key => $value) {
-                $refs[$key] = &$bind[$key];
-            }
-            call_user_func_array(array($stmt, 'bind_param'), $refs);
-        }
+		$stmt = mysqli_prepare($con, $sql);
 
-        if (!mysqli_stmt_execute($stmt)) {
-            throw new RuntimeException('Database query failed.');
-        }
+		if ($stmt === false) {
+			throw new RuntimeException(
+				'Database statement failed: ' . mysqli_error($con)
+			);
+		}
 
-        return $stmt;
-    }
+		if ($types !== '' && !empty($params)) {
+
+			$bind = array($types);
+
+			foreach ($params as $value) {
+				$bind[] = $value;
+			}
+
+			$refs = array();
+
+			foreach ($bind as $key => &$value) {
+				$refs[$key] = &$value;
+			}
+
+			if (!call_user_func_array(
+				array($stmt, 'bind_param'),
+				$refs
+			)) {
+				$error = mysqli_stmt_error($stmt);
+				mysqli_stmt_close($stmt);
+
+				throw new RuntimeException(
+					'Gagal bind parameter: ' . $error
+				);
+			}
+		}
+
+		if (!mysqli_stmt_execute($stmt)) {
+			$error = mysqli_stmt_error($stmt);
+			mysqli_stmt_close($stmt);
+
+			throw new RuntimeException(
+				'Gagal menjalankan query: ' . $error
+			);
+		}
+
+		return $stmt;
+	}
 
     function hms_fetch_all($con, $sql, $types = '', $params = array())
-    {
-        $stmt = hms_stmt($con, $sql, $types, $params);
-        $result = mysqli_stmt_get_result($stmt);
-        $rows = array();
-        if ($result) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $rows[] = $row;
-            }
-        }
-        mysqli_stmt_close($stmt);
-        return $rows;
-    }
+	{
+		// Ambil koneksi MySQL dari CodeIgniter 4
+		$con = hms_get_mysql_connection($con);
+
+		$stmt = hms_stmt($con, $sql, $types, $params);
+
+		$rows = array();
+
+		try {
+
+			$result = mysqli_stmt_get_result($stmt);
+
+			if ($result === false) {
+				throw new RuntimeException(
+					'Gagal mengambil hasil query: ' .
+					mysqli_stmt_error($stmt)
+				);
+			}
+
+			while ($row = mysqli_fetch_assoc($result)) {
+				$rows[] = $row;
+			}
+
+			// Sangat penting untuk mencegah #2014
+			mysqli_free_result($result);
+
+		} finally {
+
+			mysqli_stmt_close($stmt);
+		}
+
+		return $rows;
+	}
 
     function hms_result($con, $sql, $types = '', $params = array())
     {
@@ -1491,6 +2069,14 @@ function hms_flash($type, $message)
         $params[] = (int) $appointmentId;
         hms_execute($con, 'UPDATE appointment SET ' . implode(', ', $fields) . ' WHERE id = ?', $types, $params);
         hms_log_audit($con, $actorType, $actorId, 'appointment_status_changed', 'appointment', $appointmentId, 'Status changed to ' . $status);
+        // Keep the linked outpatient visit in sync with the appointment lifecycle.
+        $bridgeFile = __DIR__ . '/appointment_queue_bridge.php';
+        if (is_file($bridgeFile)) {
+            require_once $bridgeFile;
+            if (function_exists('hms_bridge_sync_appointment_status')) {
+                hms_bridge_sync_appointment_status($con, (int)$appointmentId, $status);
+            }
+        }
         return true;
     }
 
@@ -1715,31 +2301,34 @@ function hms_flash($type, $message)
         if ($role === 'admin') {
             return array(
                 array('dashboard', 'Dasbor', hms_admin_url('dashboard.php'), 'bi-speedometer2'),
-                array('appointments', 'Janji Temu', hms_admin_url('appointment-history.php'), 'bi-calendar-check'),
-                array('availability', 'Ketersediaan', hms_admin_url('doctor-availability.php'), 'bi-clock-history'),
-                array('notifications', 'Notifikasi', hms_admin_url('notifications.php'), 'bi-bell'),
-                array('audit', 'Log Audit', hms_admin_url('audit-logs.php'), 'bi-shield-check'),
+                //array('registration', 'Registrasi & Antrean', hms_admin_url('registrasi-terintegrasi.php'), 'bi-ticket-perforated'),
+                array('appointments', 'Appointment', hms_admin_url('appointment-history.php'), 'bi-calendar-check'),
+                array('schedules', 'Master Poli & Jadwal', hms_admin_url('master-poli-jadwal.php'), 'bi-calendar-week'),
                 array('doctors', 'Dokter', hms_admin_url('manage-doctors.php'), 'bi-person-badge'),
                 array('patients', 'Pasien', hms_admin_url('manage-patient.php'), 'bi-people'),
-                array('reports', 'Laporan', hms_admin_url('between-dates-reports.php'), 'bi-file-earmark-text')
+                array('operations', 'Modul Pelayanan RS', hms_admin_url('operations_dashboard.php'), 'bi-hospital'),
+                array('reports', 'Laporan', hms_admin_url('between-dates-reports.php'), 'bi-file-earmark-text'),
+                array('notifications', 'Notifikasi', hms_admin_url('notifications.php'), 'bi-bell'),
+                array('audit', 'Log Audit', hms_admin_url('audit-logs.php'), 'bi-shield-check')
             );
         }
         if ($role === 'doctor') {
             return array(
                 array('dashboard', 'Dasbor', 'dashboard.php', 'bi-speedometer2'),
-                array('appointments', 'Janji Temu', 'appointment-history.php', 'bi-calendar-check'),
-                array('availability', 'Ketersediaan', 'availability.php', 'bi-clock-history'),
+                array('queue', 'Antrean Pasien Saya', 'visit-queue.php', 'bi-ticket-perforated'),
+                array('appointments', 'Appointment', 'appointment-history.php', 'bi-calendar-check'),
+                array('availability', 'Jadwal Praktik', 'availability.php', 'bi-clock-history'),
+                array('patients', 'Pasien & RME', 'manage-patient.php', 'bi-people'),
                 array('prescriptions', 'Resep', 'prescriptions.php', 'bi-file-medical'),
-                array('patients', 'Pasien', 'manage-patient.php', 'bi-people'),
-                array('search', 'Cari', 'search.php', 'bi-search')
+                array('search', 'Cari Pasien', 'search.php', 'bi-search')
             );
         }
         return array(
             array('dashboard', 'Dasbor', 'dashboard.php', 'bi-speedometer2'),
-            array('book', 'Buat Janji Temu', 'book-appointment.php', 'bi-calendar-plus'),
-            array('appointments', 'Janji Temu', 'appointment-history.php', 'bi-calendar-check'),
+            array('book', 'Buat Appointment', 'book-appointment.php', 'bi-calendar-plus'),
+            array('appointments', 'Appointment & Status', 'appointment-history.php', 'bi-calendar-check'),
             array('history', 'Riwayat Medis', 'manage-medhistory.php', 'bi-journal-medical'),
-            array('profile', 'Profil', 'edit-profile.php', 'bi-person')
+            array('profile', 'Profil Pasien', 'edit-profile.php', 'bi-person')
         );
     }
 
